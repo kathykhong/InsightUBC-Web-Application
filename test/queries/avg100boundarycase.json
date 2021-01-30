@@ -1,0 +1,19 @@
+{
+    "title": "SELECT dept, avg WHERE avg > 97",
+    "query": {
+        "WHERE": {
+            "EQ": {
+                "courses_avg": 100
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_dept",
+                "courses_avg",
+                "courses_title"
+            ]
+        }
+    },
+    "isQueryValid": true,
+    "result": []
+}
