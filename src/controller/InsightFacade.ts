@@ -1,12 +1,10 @@
 import Log from "../Util";
 import {IInsightFacade, InsightDataset, InsightDatasetKind, InsightError} from "./IInsightFacade";
 import {Dataset} from "./Dataset";
-import {Course} from "./Course";
-import {Section} from "./Section";
 import * as JSZip from "jszip";
 import * as fs from "fs";
-import {ensureFile, pathExists} from "fs-extra";
-import {log} from "util";
+import {Course} from "./Course";
+import {Section} from "./Section";
 
 /**
  * This is the main programmatic entry point for the project.
@@ -18,8 +16,10 @@ export default class InsightFacade implements IInsightFacade {
     constructor() {
         Log.trace("InsightFacadeImpl::init()");
     }
-
+// TODO: valid zip file check
+    // extractJson method
     public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
+        let datasetToAdd: Dataset;
         // check id validity
         if (id.includes("_") || !id.trim() || id === "") {
             return Promise.reject(new InsightError("invalid id"));
@@ -34,41 +34,78 @@ export default class InsightFacade implements IInsightFacade {
                 } else {
                     // unzip
                     let zip = new JSZip();
-                    zip.loadAsync(content, { base64: true }).then(function (r) {
-                        // console.log(r);
-                        // doParse(r);
-                        // r is JSzip, r.files -> courses/, and courses/DEPTNUM
-                        for (let item in r.files) {
-                            // before adding, pick out info we want (sfield and mfield)
-                            // for every DEPTNUM access content, convert to string, put in data director
-                            // datasets[id] -> string that holds the content for that dataset
-                            // datasets[ZOOLonly] -> string: "course: ... id: ..., avg: ..., pass: ... "
-                            // datasets[id] -> dir -> course -> content
-                            let result: string;
-                            if (item.endsWith("/")) { // or dir == true
-                                r.folder(item);
-                            } else {
-                                r.file(item)
-                                    .async("string")
-                                    .then(function success() {
-                                        // maybe success(content)
-                                        // use the content
-                                        result.concat(content);
-                                    }, function error(e) {
-                                        // handle the error
-                                    });
-                            }
-                        }
-                    }, function error(e) {
-                        // handle error
+                    return zip.loadAsync(content, {base64: true})
+                        .then((res) => {
+                            return Promise.all(this.getResult(res));
+                        })
+                        // TODO: implement extraction method to read the fields, make our internal representation
+                        // TODO: of the dataset
+                        // .then((jsonresults: Array<string>) => {
+                        //     extractJSON(jsonresults);
+                        // })
+
+                        .catch((err: any) => {
+                            // Error unzipping
+                            return Promise.reject(new InsightError(err));
                     });
+                    // console.log(r);
+                    // doParse(r);
+                    // return zip.folder("courses").forEach( function (filename) {
+                    //      zip.files[filename].async("string").then( function (responseString) {
+                    //          let res: any = JSON.parse(responseString);
+                    //          Log.trace(res);
+                    //      });
+                    //  });
+                    // eslint-disable-next-line @typescript-eslint/tslint/config
+                    // r is JSzip, r.files -> courses/, and courses/DEPTNUM
+                    // before adding, pick out info we want (sfield and mfield)
+                    // for every DEPTNUM access content, convert to string, put in data director
+                    // datasets[id] -> string that holds the content for that dataset
+                    // datasets[ZOOLonly] -> string: "course: ... id: ..., avg: ..., pass: ... "
+                    // datasets[id] -> dir -> course -> content
+                    // handle error
                 }
             }
         }
+        return Promise.reject("Not implemented.");
+    }
         // confirm with TA
         // fs.writeFileSync(".data/" + id + ".zip", content);
         // @ts-ignore
-        return Promise.reject("Not implemented.");
+
+
+    // return an array of promises. each promise for each file.async
+    public getResult(r: JSZip): Array<Promise<string>> {
+        let result: Array<Promise<string>> = [];
+        // check that courses/ exists in the unzipped dir
+        // foreach(item)
+        Log.trace(r);
+        // clarify with TA wtf .folder does
+        r.folder("courses").forEach(function (pathname, file) {
+            let prom: Promise<string>;
+            prom = file.async("string").then(function (response) {
+                let parsed = JSON.parse(response);
+                return Promise.resolve(parsed);
+                // result.push(parsed);
+            });
+            result.push(prom);
+        });
+        return result;
+    }
+
+    // TODO: where to initialize our new dataset, each course, each section, and link them together
+    // TODO: figure out how to set new course, bc constructor takes in a list of sections.
+    public extractJSON(datasetJSONs: string[], newDataset: Dataset) {
+        // for each in datasetJSONs, get this course
+        for (const course of datasetJSONs) {
+            let newCourse: Course;
+            // within each course, get each section
+            for (const section of course) {
+                let newSection: Section = new Section();
+                // within each section, retrieve and store sfields and mfields, count rows = sections
+            }
+        }
+
     }
 
 
