@@ -3,7 +3,12 @@ import {Section} from "./Section";
 export class Course {
     private sections: Section[];
 
-    constructor(sections: Section[]) {
-        this.sections = sections;
+    constructor() {
+        this.sections = [];
+    }
+
+
+    public getSections(): Section[] {
+        return this.sections;
     }
 }

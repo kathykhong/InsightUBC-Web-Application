@@ -8,10 +8,15 @@ export class Dataset {
     private kind: InsightDatasetKind;
     private datasetId: string;
 
-    constructor(dataSetId: string, kind: InsightDatasetKind, numRows: number, courses: Map<string, Course>) {
+    constructor(dataSetId: string, kind: InsightDatasetKind) {
         this.datasetId = dataSetId;
         this.kind = kind;
+        this.courses = new Map();
+    }
+    public getCourses(): Map<string, Course> {
+        return this.courses;
+    }
+    public setNumRows(numRows: number) {
         this.numRows = numRows;
-        this.courses = courses;
     }
 }
