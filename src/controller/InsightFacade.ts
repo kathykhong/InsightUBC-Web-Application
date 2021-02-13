@@ -12,10 +12,10 @@ import {Section} from "./Section";
  *
  */
 export default class InsightFacade implements IInsightFacade {
-
     constructor() {
         Log.trace("InsightFacadeImpl::init()");
     }
+    private currentDatasets: string[];
 // TODO: valid zip file check
     // extractJson method
     public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
@@ -38,13 +38,19 @@ export default class InsightFacade implements IInsightFacade {
                     let zip = new JSZip();
                     return zip.loadAsync(content, {base64: true})
                         .then((res) => {
-                            result = Promise.all(this.getResult(res));
-                            return result;
+                            return Promise.all(this.getResult(res));
                         })
                         .then((jsonresults: any[]) => {
                              newDataset = this.extractJSON(jsonresults, newDataset);
-                             return result;
-                         })
+                             if (newDataset.getNumRows() === 0) {
+                                 return Promise.reject(new InsightError("Dataset contains 0 sections"));
+                             }
+                             Log.trace(id);
+                             Log.trace(jsonresults[1].result);
+                             fs.writeFileSync("../../data" + id, JSON.stringify(jsonresults));
+                             this.currentDatasets.push(id);
+                             return Promise.resolve(this.currentDatasets);
+                             })
                         .catch((err: any) => {
                             // Error unzipping
                             return Promise.reject(new InsightError(err));
@@ -52,7 +58,6 @@ export default class InsightFacade implements IInsightFacade {
                 }
             }
         }
-        return Promise.reject("Not implemented.");
     }
     // confirm with TA
     // fs.writeFileSync(".data/" + id + ".zip", content);
@@ -64,7 +69,7 @@ export default class InsightFacade implements IInsightFacade {
         let result: Array<Promise<any>> = [];
         // check that courses/ exists in the unzipped dir
         // foreach(item)
-        Log.trace(r);
+       // Log.trace(r);
         // clarify with TA wtf .folder does
         r.folder("courses").forEach(function (pathname, file) {
             let prom: Promise<any>;
@@ -84,19 +89,22 @@ export default class InsightFacade implements IInsightFacade {
         // for each course object in datasetJSONs
         // TODO:  check for valid /course root directory
         // TODO:  for valid courses will be in json format
-        // TODO- how to check one dataset has at least one section
+        //
         let numRows = 0;
+        let courseKey: string;
         for (const course of datasetJSONs) {
                 let newCourse: Course;
                 newCourse = new Course();
-                let courseKey: string;
+                courseKey = "";
             // for each section object {} in the course (result:)
                 for (const section of course.result ) {
-                let newSection: Section = new Section();
-                this.setSectionFields(newSection, section);
-                courseKey = section.Subject + section.id;
-                newCourse.getSections().push(newSection);
-                numRows++;
+                    let newSection: Section = new Section();
+                    this.setSectionFields(newSection, section);
+                    if (courseKey === "") {
+                            courseKey = section.Subject + section.id;
+                    }
+                    newCourse.getSections().push(newSection);
+                    numRows++;
             }
                 newDataset.getCourses().set(courseKey, newCourse);
         }
@@ -109,16 +117,16 @@ export default class InsightFacade implements IInsightFacade {
         if (section.Section === "overall") {
             newSection.setYear(1900);
         } else {
-            newSection.setYear(section.Year.toNumber());
+            newSection.setYear(parseInt(section.Year, 10));
         }
-        newSection.setAudit(section.Audit.toNumber());
-        newSection.setAvg(section.Avg.toNumber());
-        newSection.setDept(section.Subject());
-        newSection.setFail(section.Fail.toNumber());
-        newSection.setPass(section.Pass.toNumber());
+        newSection.setAudit(parseInt(section.Audit, 10));
+        newSection.setAvg(parseInt(section.Avg, 10));
+        newSection.setDept(section);
+        newSection.setFail(parseInt(section.Fail, 10));
+        newSection.setPass(parseInt(section.Pass, 10));
         newSection.setId(section.Course);
         newSection.setUuid(section.id);
-        newSection.setInstructor(section.Professor());
+        newSection.setInstructor(section.Professor);
         newSection.setTitle(section.Title);
     }
 

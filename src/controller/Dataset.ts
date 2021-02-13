@@ -16,6 +16,9 @@ export class Dataset {
     public getCourses(): Map<string, Course> {
         return this.courses;
     }
+    public getNumRows(): number {
+        return this.numRows;
+    }
     public setNumRows(numRows: number) {
         this.numRows = numRows;
     }
