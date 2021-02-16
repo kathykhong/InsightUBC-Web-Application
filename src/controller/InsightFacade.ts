@@ -167,11 +167,11 @@ export default class InsightFacade implements IInsightFacade {
         return arr;
     }
 
-    public performQuery(query: any): Promise<any[]> {
+    public listDatasets(): Promise<InsightDataset[]> {
         return Promise.reject("Not implemented.");
     }
 
-    public listDatasets(): Promise<InsightDataset[]> {
+    public performQuery(query: any): Promise<any[]> {
         return Promise.reject("Not implemented.");
     }
 }
