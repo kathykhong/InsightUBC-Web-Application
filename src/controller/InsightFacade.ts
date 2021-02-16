@@ -172,6 +172,17 @@ export default class InsightFacade implements IInsightFacade {
     }
 
     public listDatasets(): Promise<InsightDataset[]> {
-        return Promise.reject("Not implemented.");
+        let result: InsightDataset[] = [];
+        // [ {id, kind, numrows} {} {} ]
+        // from datasetMap, retrieve id, kind, numrows for each datasets
+        for (const dsid of this.datasetsMap.keys()) {
+            let currDS: InsightDataset = {
+                id: this.datasetsMap.get(dsid).getDatasetID(),
+                kind: InsightDatasetKind.Courses,
+                numRows: this.datasetsMap.get(dsid).getNumRows()
+            };
+            result.push(currDS);
+        }
+        return Promise.resolve(result);
     }
 }
