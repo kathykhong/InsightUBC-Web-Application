@@ -12,10 +12,13 @@ import {Section} from "./Section";
  *
  */
 export default class InsightFacade implements IInsightFacade {
+    public currentDatasets: string[] = [];
+    public datasetsMap: Map<string, Dataset>;
     constructor() {
         Log.trace("InsightFacadeImpl::init()");
+        this.datasetsMap = new Map();
     }
-   public currentDatasets: string[] = [];
+
 // TODO: valid zip file check
     // extractJson method
     public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
@@ -46,6 +49,7 @@ export default class InsightFacade implements IInsightFacade {
                              }
                              // Log.trace(id);
                              // Log.trace(jsonresults[1].result);
+                             this.datasetsMap.set(id, newDataset);
                              fs.writeFileSync( "./data/" + id, JSON.stringify(jsonresults));
                              this.currentDatasets.push(id);
                              return Promise.resolve(this.currentDatasets);
