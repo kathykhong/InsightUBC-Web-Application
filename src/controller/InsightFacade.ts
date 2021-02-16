@@ -1,5 +1,5 @@
 import Log from "../Util";
-import {IInsightFacade, InsightDataset, InsightDatasetKind, InsightError} from "./IInsightFacade";
+import {IInsightFacade, InsightDataset, InsightDatasetKind, InsightError, NotFoundError} from "./IInsightFacade";
 import {Dataset} from "./Dataset";
 import * as JSZip from "jszip";
 import * as fs from "fs";
@@ -133,8 +133,38 @@ export default class InsightFacade implements IInsightFacade {
     }
 
 
+    // return promise of updated currentDatasets
     public removeDataset(id: string): Promise<string> {
-        return Promise.reject("Not implemented.");
+        if (id.includes("_") || !id.trim() || id === "") {
+            return Promise.reject(new InsightError("invalid id"));
+        }
+        if (!this.currentDatasets.includes(id) || this.currentDatasets.length === 0 ) {
+            return Promise.reject((new NotFoundError("id is not found")));
+        }
+        if (!this.datasetsMap.has(id) || this.datasetsMap.size === 0) {
+            return Promise.reject((new NotFoundError("id is not found")));
+        }
+
+        // remove from data dir
+        const path = "./data/" + id;
+        fs.unlink(path, (error) => {
+            if (error) {
+                throw new InsightError("Could not unlink file in directory");
+            }
+        });
+
+        // remove from ds arr and map
+        this.datasetsMap.delete(id);
+        this.removeItemOnce(this.currentDatasets, id);
+        return Promise.resolve(id);
+    }
+
+    private removeItemOnce(arr: any[], id: string) {
+        let index = arr.indexOf(id);
+        if (index > -1) {
+            arr.splice(index, 1);
+        }
+        return arr;
     }
 
     public performQuery(query: any): Promise<any[]> {
