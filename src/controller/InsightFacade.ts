@@ -15,11 +15,10 @@ export default class InsightFacade implements IInsightFacade {
     constructor() {
         Log.trace("InsightFacadeImpl::init()");
     }
-    private currentDatasets: string[];
+   public currentDatasets: string[] = [];
 // TODO: valid zip file check
     // extractJson method
     public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
-        let result: Promise<string[]>;
         // check id validity
         if (id.includes("_") || !id.trim() || id === "") {
             return Promise.reject(new InsightError("invalid id"));
@@ -45,9 +44,9 @@ export default class InsightFacade implements IInsightFacade {
                              if (newDataset.getNumRows() === 0) {
                                  return Promise.reject(new InsightError("Dataset contains 0 sections"));
                              }
-                             Log.trace(id);
-                             Log.trace(jsonresults[1].result);
-                             fs.writeFileSync("../../data" + id, JSON.stringify(jsonresults));
+                             // Log.trace(id);
+                             // Log.trace(jsonresults[1].result);
+                             fs.writeFileSync( "./data/" + id, JSON.stringify(jsonresults));
                              this.currentDatasets.push(id);
                              return Promise.resolve(this.currentDatasets);
                              })
@@ -61,7 +60,6 @@ export default class InsightFacade implements IInsightFacade {
     }
     // confirm with TA
     // fs.writeFileSync(".data/" + id + ".zip", content);
-    // @ts-ignore
 
 
     // return an array of promises. each promise for each file.async
