@@ -1,7 +1,7 @@
 import {Section} from "./Section";
 
 export class Course {
-    private sections: Section[];
+    protected sections: Section[];
 
     constructor() {
         this.sections = [];
