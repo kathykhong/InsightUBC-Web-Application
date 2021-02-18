@@ -147,19 +147,14 @@ export default class InsightFacade implements IInsightFacade {
 
         // remove from data dir
         const path = "./data/" + id;
-        fs.unlink(path, (error) => {
-            if (error) {
-                throw new InsightError("Could not unlink file in directory");
-            }
-        });
-
+        fs.unlinkSync(path);
         // remove from ds arr and map
         this.datasetsMap.delete(id);
         this.removeItemOnce(this.currentDatasets, id);
         return Promise.resolve(id);
     }
 
-    private removeItemOnce(arr: any[], id: string) {
+    public removeItemOnce(arr: any[], id: string) {
         let index = arr.indexOf(id);
         if (index > -1) {
             arr.splice(index, 1);

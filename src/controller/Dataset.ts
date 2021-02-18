@@ -3,7 +3,7 @@ import InsightFacade from "./InsightFacade";
 import {InsightDatasetKind} from "./IInsightFacade";
 
 export class Dataset {
-    private courses: Map<string, Course> ;
+    protected courses: Map<string, Course> ;
     private numRows: number;
     private kind: InsightDatasetKind;
     private datasetId: string;
