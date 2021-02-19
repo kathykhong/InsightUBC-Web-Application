@@ -147,19 +147,14 @@ export default class InsightFacade implements IInsightFacade {
 
         // remove from data dir
         const path = "./data/" + id;
-        fs.unlink(path, (error) => {
-            if (error) {
-                throw new InsightError("Could not unlink file in directory");
-            }
-        });
-
+        fs.unlinkSync(path);
         // remove from ds arr and map
         this.datasetsMap.delete(id);
         this.removeItemOnce(this.currentDatasets, id);
         return Promise.resolve(id);
     }
 
-    private removeItemOnce(arr: any[], id: string) {
+    public removeItemOnce(arr: any[], id: string) {
         let index = arr.indexOf(id);
         if (index > -1) {
             arr.splice(index, 1);
@@ -168,8 +163,20 @@ export default class InsightFacade implements IInsightFacade {
     }
 
     public listDatasets(): Promise<InsightDataset[]> {
-        return Promise.reject("Not implemented.");
+        let result: InsightDataset[] = [];
+        // [ {id, kind, numrows} {} {} ]
+        // from datasetMap, retrieve id, kind, numrows for each datasets
+        for (const dsid of this.datasetsMap.keys()) {
+            let currDS: InsightDataset = {
+                id: this.datasetsMap.get(dsid).getDatasetID(),
+                kind: InsightDatasetKind.Courses,
+                numRows: this.datasetsMap.get(dsid).getNumRows()
+            };
+            result.push(currDS);
+        }
+        return Promise.resolve(result);
     }
+
 
     // check if query is valid - options first, then where
     // Abstract data tree for query (nested object)
@@ -181,4 +188,6 @@ export default class InsightFacade implements IInsightFacade {
     public performQuery(query: any): Promise<any[]> {
         return Promise.reject("Not implemented.");
     }
+
+
 }
