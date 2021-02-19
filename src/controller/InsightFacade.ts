@@ -1,10 +1,10 @@
 import Log from "../Util";
 import {IInsightFacade, InsightDataset, InsightDatasetKind, InsightError, NotFoundError} from "./IInsightFacade";
-import {Dataset} from "./Dataset";
+import {Dataset} from "../dataModel/Dataset";
 import * as JSZip from "jszip";
 import * as fs from "fs";
-import {Course} from "./Course";
-import {Section} from "./Section";
+import {Course} from "../dataModel/Course";
+import {Section} from "../dataModel/Section";
 
 /**
  * This is the main programmatic entry point for the project.
@@ -171,6 +171,13 @@ export default class InsightFacade implements IInsightFacade {
         return Promise.reject("Not implemented.");
     }
 
+    // check if query is valid - options first, then where
+    // Abstract data tree for query (nested object)
+    // grab the data
+    // check memory and disk for dataset being queried
+    // check the query, do the filtering with the dataset
+    // read the query into our query data struct
+    // for every level in the query, we want to
     public performQuery(query: any): Promise<any[]> {
         return Promise.reject("Not implemented.");
     }

@@ -1,6 +1,6 @@
 import {Course} from "./Course";
-import InsightFacade from "./InsightFacade";
-import {InsightDatasetKind} from "./IInsightFacade";
+import InsightFacade from "../controller/InsightFacade";
+import {InsightDatasetKind} from "../controller/IInsightFacade";
 
 export class Dataset {
     private courses: Map<string, Course> ;
