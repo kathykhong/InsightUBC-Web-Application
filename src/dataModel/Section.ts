@@ -1,16 +1,16 @@
 export class Section {
     // numerical fields
-    private avg: number;
-    private pass: number;
-    private fail: number;
-    private audit: number;
-    private year: number;
+    public avg: number;
+    public pass: number;
+    public fail: number;
+    public audit: number;
+    public year: number;
     // string fields
-    private dept: string;
-    private id: string;
-    private instructor: string;
-    private title: string;
-    private uuid: string;
+    public dept: string;
+    public id: string;
+    public instructor: string;
+    public title: string;
+    public uuid: string;
 
     public setAvg(value: number) {
         this.avg = value;
