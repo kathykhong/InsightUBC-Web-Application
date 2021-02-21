@@ -6,6 +6,10 @@ export class QueryValidator {
     public allFields: string[] = ["avg", "pass", "fail", "audit", "year", "dept", "id", "instructor", "title", "uuid"];
     public sFields: string[] = ["dept", "id", "instructor", "title", "uuid"];
     public mFields: string[] = ["avg", "pass", "fail", "audit", "year"];
+    public allFilters: string[] = ["LT", "GT", "EQ", "IS", "AND", "OR", "NOT"];
+    public logicFilters: string[] = ["AND", "OR"];
+    public mCompareFilters: string[] = ["LT", "GT", "EQ"];
+    public sCompareFilters: string[] = ["IS"];
     public insightFacade: InsightFacade = new InsightFacade();
 
     // first check if dataset is in our map, then check if dataset being queried has been added to data dir (disk)
@@ -20,15 +24,73 @@ export class QueryValidator {
 
         // check if WHERE keys are all valid
     }
+    // todo: do filters need ot be capitals or can we .tocapitalize them all
+    // todo: validate that all dataset ids match and are valid
 
+
+    // todo: figure out how the recursive calls work, what are we passing in to get all filters for the next level
     public validateWHERE(query: any): Promise<any> {
         // check if WHERE clause exists
         if (Object.keys(query).includes("WHERE")) {
             return Promise.reject(new InsightError("Query must contain valid WHERE"));
         }
+        if (Object.keys(query)[0] !== "WHERE") {
+            return Promise.reject(new InsightError("WHERE must be the first block"));
+        }
         // check if WHERE clause exists but is empty
-        if (!query["WHERE"]) {
+        if (Object.keys(query.WHERE).length === 0) {
             return Promise.reject(new ResultTooLargeError("Matches all entries."));
+        }
+        // check if WHERE contains zero or one Filter
+        if (Object.keys(query.WHERE).length > 1) {
+            return Promise.reject(new InsightError("WHERE can only have maximum one filter"));
+        }
+        // check that the one filter inside WHERE is actually a valid filter
+        // if it's an AND, an OR, or a NOT
+    }
+
+    // if its an M or Scomp, return
+    // if its an Logic or Negation, recurse???
+
+    // todo: Object.keys(query.WHERE)[0] can't be called at for each level of recursion???? help
+    // todo: do we need resolve and a break or ??
+    public validateFilter(query: any): Promise<any> {
+        switch (Object.keys(query.WHERE)[0]) {
+            case "LT": {
+                // validateLT(); to check the value?
+                return Promise.resolve();
+                break;
+            }
+            case "GT": {
+                // validateGT(); ?
+                return Promise.resolve();
+                break;
+            }
+            case "EQ": {
+                // validateEQ(); ?
+                return Promise.resolve();
+                break;
+            }
+            case "IS": {
+                // validateIS(); ?
+                return Promise.resolve();
+                break;
+            }
+            case "AND": {
+                // validateAND(); ?
+                return Promise.resolve();
+                break;
+            }
+            case "OR": {
+                // validateOR();
+                return Promise.resolve();
+                break;
+            }
+            case "NOT": {
+                // validateNOT();
+                return Promise.resolve();
+                break;
+            }
         }
     }
 

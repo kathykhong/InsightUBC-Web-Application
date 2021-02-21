@@ -1,5 +1,4 @@
 // todo: call validate filter on each (type checking key:val pairs)
-// todo: validate that all dataset ids match and are valid
 // public handleFilter() {
 //     switch:
 //         case: "AND" {
