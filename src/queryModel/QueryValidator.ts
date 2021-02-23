@@ -1,5 +1,4 @@
 import {InsightError, ResultTooLargeError} from "../controller/IInsightFacade";
-import {IInsightFacade} from "../controller/IInsightFacade";
 import InsightFacade from "../controller/InsightFacade";
 
 export class QueryValidator {
@@ -21,21 +20,43 @@ export class QueryValidator {
         if (Object.keys(query).length === 0) {
             return Promise.reject(new InsightError("Query is empty"));
         }
+
+        // check if query has exactly 2 arguments
+        if (Object.keys(query).length !== 2) {
+            return Promise.reject(new InsightError("Query must contain 2 arguments"));
+        } else {
+            // check that query has only a WHERE and an OPTIONS
+            if (!this.containsWHEREandOPTIONS(query)) {
+                return Promise.reject(new InsightError("Query must contain WHERE and OPTIONS blocks"));
+            }
+        }
         this.validateWHERE(query);
         this.validateOPTIONS(query);
-
         // check if WHERE keys are all valid
+    }
+
+    public containsWHEREandOPTIONS(query: any): boolean {
+        if ((Object.keys(query[0] !== "WHERE")) || (Object.keys(query[0] !== "OPTIONS"))) {
+            return false;
+        }
+        if ((Object.keys(query[1] !== "WHERE")) || (Object.keys(query[1] !== "OPTIONS"))) {
+            return false;
+        }
+        if ((Object.keys(query)[0] === "WHERE" && Object.keys(query)[1] !== "OPTIONS")
+            || (Object.keys(query)[0] === "OPTIONS" && Object.keys(query)[1] !== "WHERE")) {
+            return false;
+        }
+        return true;
     }
     // todo: do filters need ot be capitals or can we .tocapitalize them all
     // todo: validate that all dataset ids match and are valid
 
-
     public validateWHERE(query: any): Promise<any> {
-        // check if WHERE clause exists
+        // check if WHERE clause exists, maybe redundant if caller is checking
         if (Object.keys(query).includes("WHERE")) {
             return Promise.reject(new InsightError("Query must contain valid WHERE"));
         }
-        if (Object.keys(query)[0] !== "WHERE") {
+        if (Object.keys(query)[0] !== "WHERE" || Object.keys(query)[1] !== "WHERE") {
             return Promise.reject(new InsightError("WHERE must be the first block"));
         }
         // check if WHERE clause exists but is empty
@@ -131,6 +152,7 @@ export class QueryValidator {
     }
 
     public validateOPTIONS(query: any): Promise<any> {
+        // may be redundant if caller is checking
         if (!Object.keys(query).includes("OPTIONS")) {
             return Promise.reject(new InsightError("Query must contain valid OPTIONS"));
         }
@@ -139,30 +161,38 @@ export class QueryValidator {
             return Promise.reject(new InsightError("Query must contain non-empty OPTIONS"));
         }
 
-        // check validity of COLUMNS
-        if (Object.keys(query.OPTIONS).length === 1 || Object.keys(query.OPTIONS).length === 2) {
+        // check validity of COLUMNS and ORDER
+        if (Object.keys(query.OPTIONS).length === 1) {
             this.validateCOLUMNS(query);
+        } else if (Object.keys(query.OPTIONS).length === 2) {
+            if (!this.containsCOLUMNSandORDER(query)) {
+                return Promise.reject(new InsightError("If OPTIONS body has 2 arguments, they must" +
+                    "be COLUMNS and ORDER"));
+            } else {
+                // must call validateCOLUMNS before validateORDER for global var to be set
+                this.validateCOLUMNS(query);
+                this.validateORDER(query);
+            }
         } else {
             return Promise.reject(new InsightError("OPTIONS must have one or two clauses"));
         }
+    }
 
-        // check validity of ORDER if it exists
-        if (Object.keys(query.OPTIONS).length === 2) {this.validateORDER(query); }
-        // todo: CONFIRM that the order of keys must be columns, then order? or either?
-        // ORDER has one key, check that it is inside COLUMNS
-        // if ORDER exists, check that it only contains one key
-
-        // IF BLOCK: COLUMNS and ORDER case
-        if (Object.keys(query.OPTIONS).length === 2) {
-            if (Object.keys(query.OPTIONS)[0] !== "COLUMNS" || Object.keys(query.OPTIONS)[1] !== "ORDER") {
-                return Promise.reject(new InsightError("OPTIONS must contain COLUMNS then ORDER"));
-            }
-
-            // check if COLUMNS is empty
-            if (Object.keys(query.OPTIONS.COLUMNS).length === 0) {
-                return Promise.reject(new InsightError("COLUMNS cannot be empty"));
-            }
+    // REQUIRES: caller to check that Object.keys(query.OPTIONS).length === 2
+    public containsCOLUMNSandORDER(query: any): boolean {
+        if (Object.keys(query.OPTIONS)[0] !== "COLUMNS" || Object.keys(query.OPTIONS)[0] !== "ORDER") {
+            return false;
         }
+
+        if (Object.keys(query.OPTIONS)[1] !== "COLUMNS" || Object.keys(query.OPTIONS)[1] !== "ORDER") {
+            return false;
+        }
+
+        if ((Object.keys(query.OPTIONS)[0] === "COLUMNS" && Object.keys(query.OPTIONS)[1] !== "ORDER")
+            || (Object.keys(query.OPTIONS)[0] === "ORDER" && Object.keys(query.OPTIONS)[1] !== "COLUMNS")) {
+            return false;
+        }
+        return true;
     }
 
 
@@ -212,7 +242,8 @@ export class QueryValidator {
             return Promise.reject(new InsightError("COLUMNS can only contain one clause"));
         }
         // when OPTIONS contains ORDER, check that OPTIONS only has one ORDER
-        if (Object.keys(query.OPTIONS)[1] !== "ORDER") {
+        // todo: maybe redundant if caller is also checking but who'sssss responsibility?????
+        if (!this.containsCOLUMNSandORDER(query)) {
             return Promise.reject(new InsightError("OPTIONS must have one or no ORDER"));
         }
 
