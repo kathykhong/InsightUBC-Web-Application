@@ -8,8 +8,8 @@ public handleFilter() {
             [] to store Object.keys(this AND layer) todo: does this act like a queue
             [] to store true/false values for every recursive call or just call "leaf helpers"
             check [bool] for final return value for this layer
+            processing: for each recursive call, pass in the filtered dataset
             todo: ash's big question is still how we keep track of what layer we're on
-            is it like building a string, where you can do currentsubquery.[next thing in queue]???
         }
         case: "OR"{
             // for each Object.keys inside this AND sub-object, recurse handleFilter(sub-subobject)

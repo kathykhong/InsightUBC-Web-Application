@@ -14,41 +14,43 @@ export class QueryValidator {
     public insightFacade: InsightFacade = new InsightFacade();
 
     // first check if dataset is in our map, then check if dataset being queried has been added to data dir (disk)
-    // json.parse
     public validateQuery(query: any): Promise<any> {
         // check if query is empty
         if (Object.keys(query).length === 0) {
             return Promise.reject(new InsightError("Query is empty"));
         }
-
         // check if query has exactly 2 arguments
         if (Object.keys(query).length !== 2) {
             return Promise.reject(new InsightError("Query must contain 2 arguments"));
-        } else {
+        }
+        if (Object.keys(query).length === 2) {
             // check that query has only a WHERE and an OPTIONS
             if (!this.containsWHEREandOPTIONS(query)) {
                 return Promise.reject(new InsightError("Query must contain WHERE and OPTIONS blocks"));
+            } else {
+                this.validateWHERE(query);
+                this.validateOPTIONS(query);
             }
-        }
-        this.validateWHERE(query);
-        this.validateOPTIONS(query);
-        // check if WHERE keys are all valid
+        } // check if WHERE keys are all valid
     }
-
-    public containsWHEREandOPTIONS(query: any): boolean {
+    public containsWHEREandOPTIONS(query: any): Promise<any> {
+        if (!Object.keys(query).includes("WHERE")) {
+            return Promise.reject(new InsightError("Query must contain a WHERE clause"));
+        }
+        if (!Object.keys(query).includes("OPTIONS")) {
+            return Promise.reject(new InsightError("Query must contain a OPTIONS clause"));
+        }
         if ((Object.keys(query[0] !== "WHERE")) || (Object.keys(query[0] !== "OPTIONS"))) {
-            return false;
+            return Promise.reject(new InsightError("Keys must be WHERE or OPTIONS only"));
         }
         if ((Object.keys(query[1] !== "WHERE")) || (Object.keys(query[1] !== "OPTIONS"))) {
-            return false;
+            return Promise.reject(new InsightError("Keys must be WHERE or OPTIONS only"));
         }
         if ((Object.keys(query)[0] === "WHERE" && Object.keys(query)[1] !== "OPTIONS")
             || (Object.keys(query)[0] === "OPTIONS" && Object.keys(query)[1] !== "WHERE")) {
-            return false;
+            return Promise.reject(new InsightError("Keys must be WHERE or OPTIONS only"));
         }
-        return true;
     }
-    // todo: do filters need ot be capitals or can we .tocapitalize them all
     // todo: validate that all dataset ids match and are valid
 
     public validateWHERE(query: any): Promise<any> {
@@ -57,7 +59,7 @@ export class QueryValidator {
             return Promise.reject(new InsightError("Query must contain valid WHERE"));
         }
         if (Object.keys(query)[0] !== "WHERE" || Object.keys(query)[1] !== "WHERE") {
-            return Promise.reject(new InsightError("WHERE must be the first block"));
+            return Promise.reject(new InsightError("WHERE must be the first or second block"));
         }
         // check if WHERE clause exists but is empty
         if (Object.keys(query.WHERE).length === 0) {
@@ -67,19 +69,18 @@ export class QueryValidator {
         if (Object.keys(query.WHERE).length > 1) {
             return Promise.reject(new InsightError("WHERE can only have maximum one filter"));
         }
-        // check that the one filter inside WHERE is actually a valid filter
+        // check that the one filter inside WHERE is actually a valid filter by calling validateFILTER
+        this.validateFilter(query.WHERE);
+        return Promise.resolve();
         // if it's an AND, an OR, or a NOT
     }
-
-    // if its an M or Scomp, return
-    // if its an Logic or Negation, recurse???
+    // if its an M or Scomp, return, if its an Logic or Negation, recurse???
     // todo: figure out how the recursive calls work, what are we passing in to get all filters for the next level
     // todo: Object.keys(query.WHERE)[0] can't be called at for each level of recursion???? help
-    // todo: do we need resolve and a break or ??
-    public validateFilter(query: any): Promise<any> {
-        switch (Object.keys(query.WHERE)[0]) {
+    public validateFilter(subquery: any): Promise<any> {
+        switch (Object.keys(subquery)[0]) {
             case "LT": {
-                this.validateLT(query);
+                this.validateLT(subquery);
                 return Promise.resolve();
                 break;
             }
@@ -100,6 +101,11 @@ export class QueryValidator {
             }
             case "AND": {
                 // validateAND(); ?
+                // iterate over the array that is AND
+                for (const arg in subquery.AND) {
+                    // each arg is an object held in the AND array
+                    this.validateFilter(arg);
+                }
                 return Promise.resolve();
                 break;
             }
@@ -160,7 +166,6 @@ export class QueryValidator {
         if (query.OPTIONS.length === 0) {
             return Promise.reject(new InsightError("Query must contain non-empty OPTIONS"));
         }
-
         // check validity of COLUMNS and ORDER
         if (Object.keys(query.OPTIONS).length === 1) {
             this.validateCOLUMNS(query);
@@ -179,20 +184,20 @@ export class QueryValidator {
     }
 
     // REQUIRES: caller to check that Object.keys(query.OPTIONS).length === 2
-    public containsCOLUMNSandORDER(query: any): boolean {
+    public containsCOLUMNSandORDER(query: any): Promise<any> {
         if (Object.keys(query.OPTIONS)[0] !== "COLUMNS" || Object.keys(query.OPTIONS)[0] !== "ORDER") {
-            return false;
+            return Promise.reject(new InsightError("Keys must be COLUMNS or ORDER only"));
         }
 
         if (Object.keys(query.OPTIONS)[1] !== "COLUMNS" || Object.keys(query.OPTIONS)[1] !== "ORDER") {
-            return false;
+            return Promise.reject(new InsightError("Keys must be COLUMNS or ORDER only"));
         }
 
         if ((Object.keys(query.OPTIONS)[0] === "COLUMNS" && Object.keys(query.OPTIONS)[1] !== "ORDER")
             || (Object.keys(query.OPTIONS)[0] === "ORDER" && Object.keys(query.OPTIONS)[1] !== "COLUMNS")) {
-            return false;
+            return Promise.reject(new InsightError("Keys must be COLUMNS or ORDER only"));
         }
-        return true;
+        return Promise.resolve();
     }
 
 
@@ -228,11 +233,11 @@ export class QueryValidator {
             if (prevID === "" || prevID === currID) {
                 prevID = currID;
             } else {
-                    return Promise.reject(new InsightError("all keys must have the same id"));
-                }
+                return Promise.reject(new InsightError("all keys must have the same id"));
             }
-        this.columnIDString = prevID;
         }
+        this.columnIDString = prevID;
+    }
 
     public validateORDER(query: any): Promise<any> {
         // if OPTIONS contains a second OPTION, check that it is ORDER
@@ -242,11 +247,17 @@ export class QueryValidator {
             return Promise.reject(new InsightError("COLUMNS can only contain one clause"));
         }
         // when OPTIONS contains ORDER, check that OPTIONS only has one ORDER
+        if (!Object.keys(query.OPTIONS).includes("ORDER")) {
+            return Promise.reject(new InsightError("OPTIONS must contain one or no ORDER"));
+        }
+        if (!Object.keys(query.OPTIONS).includes("COLUMNS")) {
+            return Promise.reject(new InsightError("OPTIONS must contain one COLUMNS"));
+        }
+        // when OPTIONS contains ORDER, check that OPTIONS only has one ORDER
         // todo: maybe redundant if caller is also checking but who'sssss responsibility?????
         if (!this.containsCOLUMNSandORDER(query)) {
             return Promise.reject(new InsightError("OPTIONS must have one or no ORDER"));
         }
-
         // check if ORDER has one key only
         if (Object.keys(query.OPTIONS.ORDER).length !== 1) {
             return Promise.reject(new InsightError("ORDER can only contain one key"));
@@ -271,14 +282,9 @@ export class QueryValidator {
     public splitIDKey(idKey: string): string[] {return idKey.split("_"); }
 
     public isValidIDString(ID: string): boolean {
-        if (ID.length < 1) {
-            return false;
-        }
-        if (ID.includes("_")) {
-            return false;
-        }
-        return true;
-    }
+        if (ID.length < 1) {return false; }
+        if (ID.includes("_")) {return false; }
+        return true; }
 
     public isValidField(field: string, fieldType: string): boolean {
         if (fieldType === "all") {
