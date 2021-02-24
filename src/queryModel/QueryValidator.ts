@@ -20,18 +20,22 @@ export class QueryValidator {
             return Promise.reject(new InsightError("Query is empty"));
         }
         // check if query has exactly 2 arguments
-        if (Object.keys(query).length !== 2) {
-            return Promise.reject(new InsightError("Query must contain 2 arguments"));
+        if (Object.keys(query).length >= 2) {
+            if ((!Object.keys(query).includes("WHERE")) && !Object.keys(query).includes("OPTIONS")) {
+                return Promise.reject(new InsightError("Query must contain WHERE and OPTIONS arguments")); }
+            // for (const qkey in Object.keys(query)) {
+            //     if ((qkey !== "OPTIONS" && qkey !== "WHERE")) {
+            //         return Promise.reject(new InsightError("Query must contain WHERE and OPTIONS arguments")); }
+            // } todo
         }
         if (Object.keys(query).length === 2) {
             // check that query has only a WHERE and an OPTIONS
             if (!this.containsWHEREandOPTIONS(query)) {
                 return Promise.reject(new InsightError("Query must contain WHERE and OPTIONS blocks"));
             } else {
-                this.validateWHERE(query);
                 this.validateOPTIONS(query);
-            }
-        } // check if WHERE keys are all valid
+                this.validateWHERE(query);
+            }} // check if WHERE keys are all valid
     }
     public containsWHEREandOPTIONS(query: any): Promise<any> {
         if (!Object.keys(query).includes("WHERE")) {
@@ -49,8 +53,7 @@ export class QueryValidator {
         if ((Object.keys(query)[0] === "WHERE" && Object.keys(query)[1] !== "OPTIONS")
             || (Object.keys(query)[0] === "OPTIONS" && Object.keys(query)[1] !== "WHERE")) {
             return Promise.reject(new InsightError("Keys must be WHERE or OPTIONS only"));
-        }
-    }
+        }}
     // todo: validate that all dataset ids match and are valid
 
     public validateWHERE(query: any): Promise<any> {
@@ -200,7 +203,6 @@ export class QueryValidator {
         return Promise.resolve();
     }
 
-
     public validateCOLUMNS(query: any): Promise<any> {
         // check that COLUMNS has at least one key
         if (Object.keys(query.OPTIONS.COLUMNS).length < 1) {
@@ -272,7 +274,6 @@ export class QueryValidator {
         if (this.columnIDString !== currID) {
             return Promise.reject(new InsightError("Dataset ID must match all other dataset IDs in this query"));
         }
-
         // check if ORDER's (singular) key is included in COLUMNS
         if (!this.columnFields.includes(currKey)) {
             return Promise.reject(new InsightError("ORDER key must be included in COLUMNS keys "));
