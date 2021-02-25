@@ -3,6 +3,13 @@ import {QueryValidator} from "./QueryValidator";
 
 export class OptionsValidator {
     public validateOPTIONS(query: any, queryValidator: QueryValidator): Promise<any> {
+        // check if OPTIONS contains null or undefined values
+        if (Object.keys(query).includes(null) || Object.keys(query).includes(undefined)) {
+            return Promise.reject(new InsightError("OPTIONS cannot contain null or undefined"));
+        }
+        if (Object.values(query).includes(null) || Object.values(query).includes(undefined)) {
+            return Promise.reject(new InsightError("OPTIONS values cannot be null or undefined"));
+        }
         // may be redundant if caller is checking
         if (!Object.keys(query).includes("OPTIONS")) {
             return Promise.reject(new InsightError("Query must contain valid OPTIONS"));
@@ -46,42 +53,42 @@ export class OptionsValidator {
     }
 
     public validateCOLUMNS(query: any, queryValidator: QueryValidator): Promise<any> {
-        // check that COLUMNS has at least one key
-        if (Object.keys(query.OPTIONS.COLUMNS).length < 1) {
-            return Promise.reject(new InsightError("COLUMNS must contain at least one key"));
-        }
+            // check that COLUMNS has at least one key
+            if (Object.keys(query.OPTIONS.COLUMNS).length < 1) {
+                return Promise.reject(new InsightError("COLUMNS must contain at least one key"));
+            }
 
-        // check that OPTIONS contains COLUMNS
-        if (Object.keys(query.OPTIONS).length === 1) {
-            if (Object.keys(query.OPTIONS)[0] !== "COLUMNS") {
-                return Promise.reject(new InsightError("OPTIONS must contain COLUMNS"));
+            // check that OPTIONS contains COLUMNS
+            if (Object.keys(query.OPTIONS).length === 1) {
+                if (Object.keys(query.OPTIONS)[0] !== "COLUMNS") {
+                    return Promise.reject(new InsightError("OPTIONS must contain COLUMNS"));
+                }
             }
-        }
 
-        // check the validity of each key inside COLUMNS
-        // for each id_key in columns, split, and check that the key element is one of the valid mkeys or skeys
-        let prevID: string = "";
-        for (const key of Object.keys(query.OPTIONS.COLUMNS)) {
-            let currIDKeyArr = queryValidator.splitIDKey(key);
-            let currID: string = currIDKeyArr[0];
-            let currKey: string = currIDKeyArr[1];
-            if (!queryValidator.isValidField(currKey, "all")) {
-                return Promise.reject(new InsightError("Invalid key"));
-            }
-            queryValidator.columnFields.push(currKey);
+            // check the validity of each key inside COLUMNS
+            // for each id_key in columns, split, and check that the key element is one of the valid mkeys or skeys
+            let prevID: string = "";
+            for (const key of Object.keys(query.OPTIONS.COLUMNS)) {
+                let currIDKeyArr = queryValidator.splitIDKey(key);
+                let currID: string = currIDKeyArr[0];
+                let currKey: string = currIDKeyArr[1];
+                if (!queryValidator.isValidField(currKey, "all")) {
+                    return Promise.reject(new InsightError("Invalid key"));
+                }
+                queryValidator.columnFields.push(currKey);
 
-            if ((currID.includes("_") || !currID.trim())) {
-                return Promise.reject(new InsightError("Invalid course id"));
+                if ((currID.includes("_") || !currID.trim())) {
+                    return Promise.reject(new InsightError("Invalid course id"));
+                }
+                // check if all keys have the same id
+                if (prevID === "" || prevID === currID) {
+                    prevID = currID;
+                } else {
+                    return Promise.reject(new InsightError("all keys must have the same id"));
+                }
             }
-            // check if all keys have the same id
-            if (prevID === "" || prevID === currID) {
-                prevID = currID;
-            } else {
-                return Promise.reject(new InsightError("all keys must have the same id"));
-            }
+            queryValidator.columnIDString = prevID;
         }
-        queryValidator.columnIDString = prevID;
-    }
 
     public validateORDER(query: any, queryValidator: QueryValidator): Promise<any> {
         // if OPTIONS contains a second OPTION, check that it is ORDER

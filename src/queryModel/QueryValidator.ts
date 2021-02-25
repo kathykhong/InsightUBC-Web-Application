@@ -18,8 +18,11 @@ export class QueryValidator {
     public validateQuery(query: any): Promise<any> {
         // check if query is empty
         if (Object.keys(query).length === 0) {
-            return Promise.reject(new InsightError("Query is empty"));
-        }
+            return Promise.reject(new InsightError("Query is empty")); }
+        if (Object.keys(query).includes(null) || Object.keys(query).includes(undefined)) {
+            return Promise.reject(new InsightError("Query cannot contain null or undefined")); }
+        if (Object.values(query).includes(null) || Object.values(query).includes(undefined)) {
+            return Promise.reject(new InsightError("Query values cannot be null or undefined")); }
         // check if query has exactly 2 arguments
         if (Object.keys(query).length >= 2) {
             if ((!Object.keys(query).includes("WHERE")) && !Object.keys(query).includes("OPTIONS")) {
@@ -79,7 +82,6 @@ export class QueryValidator {
           return Promise.resolve();
           // if it's an AND, an OR, or a NOT
       }
-      // if its an M or Scomp, return, if its an Logic or Negation, recurse???
       // todo: figure out how the recursive calls work, what are we passing in to get all filters for the next level
       // todo: Object.keys(query.WHERE)[0] can't be called at for each level of recursion???? help
       public validateFilter(subquery: any): Promise<any> {
@@ -237,56 +239,53 @@ export class QueryValidator {
              if (prevID === "" || prevID === currID) {
                  prevID = currID;
              } else {
-                 return Promise.reject(new InsightError("all keys must have the same id"));
-             }
-         }
-         this.columnIDString = prevID;
-     }
+                 return Promise.reject(new InsightError("all keys must have the same id")); }}
+         this.columnIDString = prevID;}
      public validateORDER(query: any): Promise<any> {
          // if OPTIONS contains a second OPTION, check that it is ORDER
          // Check if OPTIONS contains ORDER (optional clause)
          // maybe take the following out (in case we can't guarantee the checking at the caller level)
          if (Object.keys(query.OPTIONS).length !== 2) {
-             return Promise.reject(new InsightError("COLUMNS can only contain one clause"));
-         }
+             return Promise.reject(new InsightError("COLUMNS can only contain one clause")); }
          // when OPTIONS contains ORDER, check that OPTIONS only has one ORDER
          if (!Object.keys(query.OPTIONS).includes("ORDER")) {
-             return Promise.reject(new InsightError("OPTIONS must contain one or no ORDER"));
-         }
+             return Promise.reject(new InsightError("OPTIONS must contain one or no ORDER")); }
          if (!Object.keys(query.OPTIONS).includes("COLUMNS")) {
-             return Promise.reject(new InsightError("OPTIONS must contain one COLUMNS"));
-         }
+             return Promise.reject(new InsightError("OPTIONS must contain one COLUMNS")); }
          // when OPTIONS contains ORDER, check that OPTIONS only has one ORDER
          // todo: maybe redundant if caller is also checking but who'sssss responsibility?????
          if (!this.containsCOLUMNSandORDER(query)) {
-             return Promise.reject(new InsightError("OPTIONS must have one or no ORDER"));
-         }
+             return Promise.reject(new InsightError("OPTIONS must have one or no ORDER")); }
          // check if ORDER has one key only
          if (Object.keys(query.OPTIONS.ORDER).length !== 1) {
-             return Promise.reject(new InsightError("ORDER can only contain one key"));
-         }
+             return Promise.reject(new InsightError("ORDER can only contain one key")); }
          // check if ORDER's (singular) key is valid skey or mkey
          let currIDKeyArr = this.splitIDKey(Object.keys(query.OPTIONS.ORDER)[0]);
          let currID: string = currIDKeyArr[0];
          let currKey: string = currIDKeyArr[1];
          if (!this.isValidField(currKey, "all")) {
-             return Promise.reject(new InsightError("Invalid key"));
-         }
+             return Promise.reject(new InsightError("Invalid key")); }
          if (this.columnIDString !== currID) {
-             return Promise.reject(new InsightError("Dataset ID must match all other dataset IDs in this query"));
-         }
+             return Promise.reject(new InsightError("Dataset ID must match all other dataset IDs in this query")); }
          // check if ORDER's (singular) key is included in COLUMNS
          if (!this.columnFields.includes(currKey)) {
-             return Promise.reject(new InsightError("ORDER key must be included in COLUMNS keys "));
-         }
-     }*/
-
-    public splitIDKey(idKey: string): string[] {return idKey.split("_"); }
+             return Promise.reject(new InsightError("ORDER key must be included in COLUMNS keys ")); }
+     }*/ // cour_ses_avg - > [ cour, ses, avg ] split, check length, then check [0] [1] respectively
+    public splitIDKey(idKey: string): string[] {
+        return idKey.split("_");
+    }
+    public isLengthAfterSplitTwo(arr: string[]): Promise<boolean> {
+        if (arr.length !== 2) {
+            return Promise.reject(new InsightError("IDKey contains more than 1 underscore"));
+        }
+        return Promise.resolve(true);
+    }
 
     public isValidIDString(ID: string): boolean {
         if (ID.length < 1) {return false; }
         if (ID.includes("_")) {return false; }
         return true; }
+
     public isValidField(field: string, fieldType: string): boolean {
         if (fieldType === "all") {
             if (this.allFields.includes(field)) {return true; }

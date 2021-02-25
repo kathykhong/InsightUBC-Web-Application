@@ -24,4 +24,8 @@ public handleFilter() {
         case: "IS"
         default:
 }
+
+containsStrictlyOneUnderscore(idKey: string): boolean
+- check that the datasetid_field only has one underscore
+- if it contains more than one underscore, or no underscore, automatically invalid key type
 */

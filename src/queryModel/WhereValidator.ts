@@ -1,8 +1,16 @@
 import {InsightError, ResultTooLargeError} from "../controller/IInsightFacade";
 import {QueryValidator} from "./QueryValidator";
+import Log from "../Util";
 
 export class WhereValidator {
     public validateWHERE(query: any, queryValidator: QueryValidator): Promise<any> {
+        // check if WHERE contains null or undefined values
+        if (Object.keys(query).includes(null) || Object.keys(query).includes(undefined)) {
+            return Promise.reject(new InsightError("Query cannot contain null or undefined"));
+        }
+        if (Object.values(query).includes(null) || Object.values(query).includes(undefined)) {
+            return Promise.reject(new InsightError("Query values cannot be null or undefined"));
+        }
         // check if WHERE clause exists, maybe redundant if caller is checking
         if (Object.keys(query).includes("WHERE")) {
             return Promise.reject(new InsightError("Query must contain valid WHERE"));
@@ -28,80 +36,110 @@ export class WhereValidator {
     // todo: figure out how the recursive calls work, what are we passing in to get all filters for the next level
     // todo: Object.keys(query.WHERE)[0] can't be called at for each level of recursion???? help
     public validateFilter(subquery: any, queryValidator: QueryValidator): Promise<any> {
-        switch (Object.keys(subquery)[0]) {
-            case "LT": {
-                this.validateLT(subquery, queryValidator);
-                return Promise.resolve();
-                break;
-            }
-            case "GT": {
-                // validateGT(); ?
-                return Promise.resolve();
-                break;
-            }
-            case "EQ": {
-                // validateEQ(); ?
-                return Promise.resolve();
-                break;
-            }
-            case "IS": {
-                // validateIS(); ?
-                return Promise.resolve();
-                break;
-            }
-            case "AND": {
-                // validateAND(); ?
-                // iterate over the array that is AND
-                for (const arg in subquery.AND) {
-                    // each arg is an object held in the AND array
-                    this.validateFilter(arg, queryValidator);
+        try {
+            switch (Object.keys(subquery)[0]) {
+                case "LT": {
+                    this.validateMComp(subquery, queryValidator);
+                    return Promise.resolve();
                 }
-                return Promise.resolve();
-                break;
+                case "GT": {
+                    this.validateMComp(subquery, queryValidator);
+                    return Promise.resolve();
+                }
+                case "EQ": {
+                    this.validateMComp(subquery, queryValidator);
+                    return Promise.resolve();
+                }
+                case "IS": {
+                    // validateIS(); ?
+                    return Promise.resolve();
+                }
+                case "AND": {
+                    this.validateAND(subquery, queryValidator);
+                    // iterate over the array that is AND
+                    for (const arg in subquery.AND) {
+                        Log.trace("arg: ", arg);
+                        // each arg is an object held in the AND array
+                        this.validateFilter(arg, queryValidator);
+                    }
+                    return Promise.resolve();
+                }
+                case "OR": {
+                    // this.validateOR(subquery, queryValidator);
+                    return Promise.resolve();
+                }
+                case "NOT": {
+                    // validateNOT();
+                    return Promise.resolve();
+                }
+                default:
+                    return Promise.reject(new InsightError("Invalid Filer"));
             }
-            case "OR": {
-                // validateOR();
-                return Promise.resolve();
-                break;
-            }
-            case "NOT": {
-                // validateNOT();
-                return Promise.resolve();
-                break;
-            }
+        } catch (err) {
+            Promise.reject(err);
         }
     }
 
-    // todo: what are we passing in though
-    public validateLT(query: any, queryValidator: QueryValidator): Promise<any> {
-        // check that LT is not empty
-        if (Object.keys(query.WHERE.LT).length !== 1) {
+    public validateMComp(query: any, queryValidator: QueryValidator): Promise<any> {
+        // check if WHERE contains null or undefined values
+        if (Object.keys(query).includes(null) || Object.keys(query).includes(undefined)) {
+            return Promise.reject(new InsightError("Query cannot contain null or undefined"));
+        }
+        if (Object.values(query).includes(null) || Object.values(query).includes(undefined)) {
+            return Promise.reject(new InsightError("Query values cannot be null or undefined"));
+        }
+        // check that LT/GT/EQ is not empty
+        // query = { GT: {"dsid_field": 98} }
+        // query[0] = {"dsid_field": 98}
+        if (Object.keys(query).length !== 1) {
+            return Promise.reject(new InsightError("MComparison block must have strictly one argument"));
+        }
+        if (Object.keys(query[0]).length !== 1) {
             return Promise.reject(new InsightError("LT block must have one idstring_field argument"));
         }
         // check that LT's key:value value is a number
-        let argLT = Object.keys(query.WHERE.LT)[0];
-        if (typeof query.WHERE.LT.argLT !== "number") {
+        // query[0][0] = 98
+        let argValueLT = query[0][0];
+        if (typeof argValueLT !== "number" || typeof argValueLT === null || typeof argValueLT === undefined) {
             return Promise.reject(new InsightError("LT must compare to a number"));
         }
         // check that LT is calling on a valid mfield
-        let idStringLT: string[];
-        if (argLT.includes("_")) {
-            idStringLT = queryValidator.splitIDKey(argLT);
-        } else {
-            return Promise.reject(new InsightError("invalid key format. Must separate idstring from field"));
-        }
-
-        if (!queryValidator.mFields.includes(idStringLT[1])) {
-            return Promise.reject(new InsightError("invalid mfield specified"));
-        }
+        let idStringLTarr: string[];
+        let argKeyLT = Object.keys(query[0])[0];
+        idStringLTarr = queryValidator.splitIDKey(argKeyLT);
         // check that the id is valid
-        if (!queryValidator.isValidIDString(idStringLT[0])) {
+        if (idStringLTarr.length !== 2) {
+            return Promise.reject(new InsightError("More than one underscore was detected in MComp Filter"));
+        }
+        if (!queryValidator.isValidIDString(idStringLTarr[0])) {
             return Promise.reject(new InsightError("invalid ID"));
         }
-
+        if (!queryValidator.isValidField(idStringLTarr[1], "mField")) {
+            return Promise.reject(new InsightError("invalid mfield specified in MComp Filter"));
+        }
         // check that id matches all other ids in the query
-        if (idStringLT[0] !== queryValidator.columnIDString) {
+        if (idStringLTarr[0] !== queryValidator.columnIDString) {
             return Promise.reject(new InsightError("dataset ID must match the rest of the query"));
+        }
+    }
+
+    public validateAND (subquery: any, queryValidator: QueryValidator): Promise<any> {
+        if (Object.values(subquery.AND).length !== 1) {
+            return Promise.reject(new InsightError("AND must contain one value only"));
+        }
+        if (!Array.isArray(subquery.AND)) {
+            return Promise.reject(new InsightError("AND must contain a single array"));
+        }
+        // maybe redundant to isArray()
+        if (subquery.AND === null || subquery.AND === undefined) {
+            return Promise.reject(new InsightError("AND cannot contain null or undefined"));
+        }
+        // check if WHERE contains null or undefined values
+        if (subquery.AND.includes(null) || subquery.AND.includes(undefined)) {
+            return Promise.reject(new InsightError("Query cannot contain null or undefined"));
+        }
+        if (subquery.AND.length <= 1) {
+            return Promise.reject(new InsightError("AND's array must contain at least 2 filters"));
         }
     }
 }

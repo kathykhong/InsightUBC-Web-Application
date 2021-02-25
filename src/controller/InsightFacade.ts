@@ -186,10 +186,14 @@ export default class InsightFacade implements IInsightFacade {
     // input: query: JSON -> JSON
     // instance of insightfacade for our dataset. pass this in
     public performQuery(query: any): Promise<any[]> {
-        let validator: QueryValidator = new QueryValidator();
-        // check if query is valid
-        if (!validator.validateQuery(query)) {
-            return Promise.reject(new InsightError("Query is invalid"));
+        try {
+            let validator: QueryValidator = new QueryValidator();
+            // check if query is valid
+            if (!validator.validateQuery(query)) {
+                return Promise.reject(new InsightError("Query is invalid"));
+            }
+        } catch (err) {
+            Promise.reject(err);
         }
     }
 
