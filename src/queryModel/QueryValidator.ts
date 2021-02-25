@@ -43,6 +43,7 @@ export class QueryValidator {
                 whereValidator.validateWHERE(query, this);
             }} // check if WHERE keys are all valid
     }
+    // Object.keys(query[operator])[0]
     public containsWHEREandOPTIONS(query: any): Promise<any> {
         if (!Object.keys(query).includes("WHERE")) {
             return Promise.reject(new InsightError("Query must contain a WHERE clause"));
@@ -50,10 +51,10 @@ export class QueryValidator {
         if (!Object.keys(query).includes("OPTIONS")) {
             return Promise.reject(new InsightError("Query must contain a OPTIONS clause"));
         }
-        if ((Object.keys(query[0] !== "WHERE")) || (Object.keys(query[0] !== "OPTIONS"))) {
+        if ((Object.keys(query)[0] !== "WHERE") || (Object.keys(query)[0] !== "OPTIONS")) {
             return Promise.reject(new InsightError("Keys must be WHERE or OPTIONS only"));
         }
-        if ((Object.keys(query[1] !== "WHERE")) || (Object.keys(query[1] !== "OPTIONS"))) {
+        if ((Object.keys(query)[1] !== "WHERE") || (Object.keys(query)[1] !== "OPTIONS")) {
             return Promise.reject(new InsightError("Keys must be WHERE or OPTIONS only"));
         }
         if ((Object.keys(query)[0] === "WHERE" && Object.keys(query)[1] !== "OPTIONS")

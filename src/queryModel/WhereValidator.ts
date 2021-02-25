@@ -51,7 +51,7 @@ export class WhereValidator {
                     return Promise.resolve();
                 }
                 case "IS": {
-                    // validateIS(); ?
+                    // this.validateIS(subquery, queryValidator);
                     return Promise.resolve();
                 }
                 case "AND": {
@@ -65,11 +65,18 @@ export class WhereValidator {
                     return Promise.resolve();
                 }
                 case "OR": {
-                    // this.validateOR(subquery, queryValidator);
+                    this.validateOR(subquery, queryValidator);
+                    for (const arg in subquery.OR) {
+                        Log.trace("arg: ", arg);
+                        // each arg is an object held in the AND array
+                        this.validateFilter(arg, queryValidator);
+                    }
                     return Promise.resolve();
                 }
                 case "NOT": {
-                    // validateNOT();
+                    this.validateNOT(subquery, queryValidator);
+                    let arg = subquery.NOT;
+                    this.validateFilter(arg, queryValidator);
                     return Promise.resolve();
                 }
                 default:
@@ -91,21 +98,23 @@ export class WhereValidator {
         // check that LT/GT/EQ is not empty
         // query = { GT: {"dsid_field": 98} }
         // query[0] = {"dsid_field": 98}
+        const operator: string = Object.keys(query)[0];
+
         if (Object.keys(query).length !== 1) {
-            return Promise.reject(new InsightError("MComparison block must have strictly one argument"));
+            return Promise.reject(new InsightError(operator + " block must have strictly one argument"));
         }
-        if (Object.keys(query[0]).length !== 1) {
-            return Promise.reject(new InsightError("LT block must have one idstring_field argument"));
+        if (Object.keys(query[operator]).length !== 1) {
+            return Promise.reject(new InsightError(operator + " block must have one idstring_field argument"));
         }
         // check that LT's key:value value is a number
         // query[0][0] = 98
-        let argValueLT = query[0][0];
+        let argValueLT = Object.values(query[operator])[0];
         if (typeof argValueLT !== "number" || typeof argValueLT === null || typeof argValueLT === undefined) {
-            return Promise.reject(new InsightError("LT must compare to a number"));
+            return Promise.reject(new InsightError(operator + " must compare to a number"));
         }
         // check that LT is calling on a valid mfield
         let idStringLTarr: string[];
-        let argKeyLT = Object.keys(query[0])[0];
+        let argKeyLT = Object.keys(query[operator])[0];
         idStringLTarr = queryValidator.splitIDKey(argKeyLT);
         // check that the id is valid
         if (idStringLTarr.length !== 2) {
@@ -136,10 +145,61 @@ export class WhereValidator {
         }
         // check if WHERE contains null or undefined values
         if (subquery.AND.includes(null) || subquery.AND.includes(undefined)) {
-            return Promise.reject(new InsightError("Query cannot contain null or undefined"));
+            return Promise.reject(new InsightError("AND cannot contain null or undefined"));
         }
         if (subquery.AND.length <= 1) {
             return Promise.reject(new InsightError("AND's array must contain at least 2 filters"));
+        }
+    }
+
+    public validateOR(subquery: any, queryValidator: QueryValidator): Promise<any> {
+        if (Object.values(subquery.OR).length !== 1) {
+            return Promise.reject(new InsightError("OR must contain one value only"));
+        }
+        if (!Array.isArray(subquery.OR)) {
+            return Promise.reject(new InsightError("OR must contain a single array"));
+        }
+        // maybe redundant to isArray()
+        if (subquery.OR === null || subquery.OR === undefined) {
+            return Promise.reject(new InsightError("OR cannot contain null or undefined"));
+        }
+        // check if WHERE contains null or undefined values
+        if (subquery.OR.includes(null) || subquery.OR.includes(undefined)) {
+            return Promise.reject(new InsightError("OR cannot contain null or undefined"));
+        }
+        if (subquery.OR.length <= 1) {
+            return Promise.reject(new InsightError("OR's array must contain at least 2 filters"));
+        }
+    }
+
+    public validateNOT(subquery: any, queryValidator: QueryValidator): Promise<any> {
+        if (Object.keys(subquery).length !== 1) {
+            return Promise.reject(new InsightError("NOT must contain only one key:value pair"));
+        }
+        if (subquery.NOT === null || subquery.NOT === undefined) {
+            return Promise.reject(new InsightError("NOT's value cannot be null or undefined"));
+        }
+        if (Object.values(subquery.NOT).length !== 1) {
+            return Promise.reject(new InsightError("NOT's value must be a single object"));
+        }
+        const innerFilter: string = Object.keys(subquery.NOT)[0];
+        if (! this.isValidFilterKey(innerFilter, "all", queryValidator)) {
+            return Promise.reject(new InsightError("NOT's inner filter must be valid filter"));
+        }
+    }
+
+    public isValidFilterKey(filter: string, type: string, queryValidator: QueryValidator): boolean {
+        if (type === "all") {
+            return queryValidator.allFilters.includes(filter);
+        }
+        if (type === "logicFilter") {
+            return queryValidator.logicFilters.includes(filter);
+        }
+        if (type === "mCompareFilters") {
+            return queryValidator.mCompareFilters.includes(filter);
+        }
+        if (type === "sCompareFilters") {
+            return queryValidator.sCompareFilters.includes(filter);
         }
     }
 }
