@@ -126,8 +126,8 @@ export default class InsightFacade implements IInsightFacade {
             newSection.setYear(parseInt(section.Year, 10));
         }
         newSection.setAudit(parseInt(section.Audit, 10));
-        newSection.setAvg(parseInt(section.Avg, 10));
-        newSection.setDept(section);
+        newSection.setAvg(parseFloat(section.Avg));
+        newSection.setDept(section.Subject);
         newSection.setFail(parseInt(section.Fail, 10));
         newSection.setPass(parseInt(section.Pass, 10));
         newSection.setId(section.Course);
@@ -196,11 +196,16 @@ export default class InsightFacade implements IInsightFacade {
             validator.validateQuery(query);
             let resultSectionObjects: any[] = [];
             let datasetIDToQuery: string = validator.columnIDString;
+            if (!this.datasetsMap.has(datasetIDToQuery)) {
+                throw new InsightError("reference dataset not added yet");
+            }
             let dataset: Dataset = this.datasetsMap.get(datasetIDToQuery);
             let qp: QueryProcessor = new QueryProcessor();
             for (const course of dataset.getCourses().values()) {
                 for (const section of course.getSections()) {
-                    qp.doFilter(section, query.WHERE, resultSectionObjects);
+                    if (qp.checkFilterCondMet(section, query.WHERE)) {
+                        resultSectionObjects.push(section);
+                    }
                 }
             }
             let resultObjects: any[] = [];
@@ -210,7 +215,15 @@ export default class InsightFacade implements IInsightFacade {
                 for (const arg of validator.columnFields) {
                     jsonResultElt[courseID + "_" + arg] = sectionObject.getArg(arg);
                 }
-                resultObjects.push(sectionObject);
+                resultObjects.push(jsonResultElt);
+            }
+            if (Object.keys(resultObjects).length > 5000) {
+                throw new ResultTooLargeError("there cannot be more than 5000 results");
+            }
+
+            if (Object.keys(query.OPTIONS).length === 2)  {
+                let argSort = query.OPTIONS.ORDER;
+                resultObjects.sort((a, b) => a[argSort] - b[argSort]);
             }
             return Promise.resolve(resultObjects);
         } catch (err) {

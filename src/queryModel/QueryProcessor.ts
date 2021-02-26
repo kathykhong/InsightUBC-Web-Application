@@ -2,42 +2,49 @@ import {Section} from "../dataModel/Section";
 import {InsightError} from "../controller/IInsightFacade";
 
 export class QueryProcessor {
-    public doFilter(section: Section, subquery: any, result: any[]) {
+    public checkFilterCondMet(section: Section, subquery: any): boolean {
         switch (Object.keys(subquery)[0]) {
             case "LT": {
-                this.filterLT(subquery, section, result);
+                if (this.filterLT(subquery, section)) {
+                    return true;
+                }
                 break;
             }
             case "GT": {
-                this.filterGT(subquery, section, result);
+                if (this.filterGT(subquery, section)) {
+                    return true;
+                }
                 break;
             }
             case "EQ": {
-                this.filterEQ(subquery, section, result);
+                if (this.filterEQ(subquery, section)) {
+                    return true;
+                }
                 break;
             }
             case "IS": {
-                this.filterIS(subquery, section, result);
+                if (this.filterIS(subquery, section)) {
+                    return true;
+                }
                 break;
             }
             case "AND": {
-                let andResultArray: boolean[] = [];
-                let andArgCount: number = subquery.AND.length;
+                let andResultBoolean: boolean = true;
+                // let andArgCount: number = subquery.AND.length;
                 for (const arg of subquery.AND) {
-                    this.doFilter(section, subquery, andResultArray);
+                    if (!this.checkFilterCondMet(section, subquery)) {
+                        andResultBoolean = false;
+                    }
                 }
-                if (andResultArray.length === andArgCount) {
-                    result.push(section);
-                }
+                return andResultBoolean;
                 break;
             }
             case "OR": {
-                let orResultArray: boolean[] = [];
+                let orResultBoolean: boolean = false;
                 for (const arg of subquery.OR) {
-                    this.doFilter(section, subquery, orResultArray);
-                }
-                if (orResultArray.length >= 1) {
-                    result.push(section);
+                    if (this.checkFilterCondMet(section, subquery)) {
+                        orResultBoolean = true;
+                    }
                 }
                 break;
             }
@@ -48,7 +55,7 @@ export class QueryProcessor {
          }*/
         }
     }
-    public filterIS(subquery: any, section: Section, result: any[]) {
+    public filterIS(subquery: any, section: Section): boolean {
         const operatorIS: string = Object.keys(subquery)[0];
         let idStringISarr: string[];
         let argKeyIS = Object.keys(subquery[operatorIS])[0];
@@ -58,40 +65,25 @@ export class QueryProcessor {
         let sValue: any = Object.values(subquery[operatorIS])[0];
         switch (sfield) {
             case "dept": {
-                if (section.getDept() === sValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getDept() === sValue;
             }
             case "id": {
-                if (section.getPass() === sValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getPass() === sValue;
             }
             case "instructor": {
-                if (section.getFail() === sValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getFail() === sValue;
             }
             case "title": {
-                if (section.getAudit() === sValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getAudit() === sValue;
             }
             case "uuid": {
-                if (section.getYear() === sValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getYear() === sValue;
             }
         }
 
     }
 
-    public filterLT(subquery: any, section: Section, result: any[]) {
+    public filterLT(subquery: any, section: Section): boolean {
         const operatorLT: string = Object.keys(subquery)[0];
         let idStringLTarr: string[];
         let argKeyLT = Object.keys(subquery[operatorLT])[0];
@@ -101,39 +93,24 @@ export class QueryProcessor {
         let mValue: any = Object.values(subquery[operatorLT])[0];
         switch (mfield) {
             case "avg": {
-                if (section.getAvg() < mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getAvg() < mValue;
             }
             case "pass": {
-                if (section.getPass() < mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getPass() < mValue;
             }
             case "fail": {
-                if (section.getFail() < mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getFail() < mValue;
             }
             case "audit": {
-                if (section.getAudit() < mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getAudit() < mValue;
             }
             case "year": {
-                if (section.getYear() < mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getYear() < mValue;
             }
         }
     }
 
-    public filterGT(subquery: any, section: Section, result: any[]) {
+    public filterGT(subquery: any, section: Section): boolean {
         const operatorGT: string = Object.keys(subquery)[0];
         let idStringGTarr: string[];
         let argKeyGT = Object.keys(subquery[operatorGT])[0];
@@ -143,39 +120,25 @@ export class QueryProcessor {
         let mValue: any = Object.values(subquery[operatorGT])[0];
         switch (mfield) {
             case "avg": {
-                if (section.getAvg() > mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getAvg() > mValue;
             }
             case "pass": {
-                if (section.getPass() > mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getPass() > mValue;
             }
             case "fail": {
-                if (section.getFail() > mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getFail() > mValue;
             }
             case "audit": {
-                if (section.getAudit() > mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getAudit() > mValue;
             }
             case "year": {
-                if (section.getYear() > mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getYear() > mValue;
             }
         }
     }
 
-    public filterEQ(subquery: any, section: Section, result: any[]) {
+
+    public filterEQ(subquery: any, section: Section): boolean {
         const operatorEQ: string = Object.keys(subquery)[0];
         let idStringEQarr: string[];
         let argKeyEQ = Object.keys(subquery[operatorEQ])[0];
@@ -185,33 +148,22 @@ export class QueryProcessor {
         let mValue: any = Object.values(subquery[operatorEQ])[0];
         switch (mfield) {
             case "avg": {
-                if (section.getAvg() === mValue) {
-                    result.push(section);
-                }
+                return section.getAvg() === mValue;
                 break;
             }
             case "pass": {
-                if (section.getPass() === mValue) {
-                    result.push(section);
-                }
+                return section.getPass() === mValue;
                 break;
             }
             case "fail": {
-                if (section.getFail() === mValue) {
-                    result.push(section);
-                }
-                break;
+                return section.getFail() === mValue;
             }
             case "audit": {
-                if (section.getAudit() === mValue) {
-                    result.push(section);
-                }
+                return section.getAudit() === mValue;
                 break;
             }
             case "year": {
-                if (section.getYear() === mValue) {
-                    result.push(section);
-                }
+                return section.getYear() === mValue;
                 break;
             }
         }
