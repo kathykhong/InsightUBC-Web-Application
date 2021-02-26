@@ -1,3 +1,5 @@
+import {InsightError} from "../controller/IInsightFacade";
+
 export class Section {
     // numerical fields
     public avg: number;
@@ -92,5 +94,40 @@ export class Section {
         return this.uuid;
     }
 
-
+    public getArg(arg: string): any {
+        switch (arg) {
+            case "dept": {
+                return this.getDept();
+            }
+            case "id": {
+                return this.getId();
+            }
+            case "instructor": {
+                return this.getInstructor();
+            }
+            case "title": {
+                return this.getTitle();
+            }
+            case "uuid": {
+                return this.getUuid();
+            }
+            case "avg": {
+                return this.getAvg();
+            }
+            case "pass": {
+                return this.getPass();
+            }
+            case "fail": {
+                return this.getFail();
+            }
+            case "audit": {
+                return this.getAudit();
+            }
+            case "year": {
+                return this.getYear();
+            }
+            default:
+                throw new InsightError("Invalid arguments in columns");
+        }
+    }
 }
