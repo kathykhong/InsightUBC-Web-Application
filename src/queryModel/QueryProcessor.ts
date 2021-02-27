@@ -5,54 +5,42 @@ export class QueryProcessor {
     public checkFilterCondMet(section: Section, subquery: any): boolean {
         switch (Object.keys(subquery)[0]) {
             case "LT": {
-                if (this.filterLT(subquery, section)) {
-                    return true;
-                }
-                break;
+                return this.filterLT(subquery, section);
             }
             case "GT": {
-                if (this.filterGT(subquery, section)) {
-                    return true;
-                }
-                break;
+                return this.filterGT(subquery, section);
             }
             case "EQ": {
-                if (this.filterEQ(subquery, section)) {
-                    return true;
-                }
-                break;
+                return this.filterEQ(subquery, section);
             }
             case "IS": {
-                if (this.filterIS(subquery, section)) {
-                    return true;
-                }
-                break;
+                return this.filterIS(subquery, section);
             }
             case "AND": {
                 let andResultBoolean: boolean = true;
-                // let andArgCount: number = subquery.AND.length;
                 for (const arg of subquery.AND) {
-                    if (!this.checkFilterCondMet(section, subquery)) {
+                    if (!this.checkFilterCondMet(section, arg)) {
                         andResultBoolean = false;
                     }
                 }
                 return andResultBoolean;
-                break;
             }
             case "OR": {
                 let orResultBoolean: boolean = false;
                 for (const arg of subquery.OR) {
-                    if (this.checkFilterCondMet(section, subquery)) {
+                    if (this.checkFilterCondMet(section, arg)) {
                         orResultBoolean = true;
                     }
                 }
-                break;
+                return orResultBoolean;
             }
-            /* case "NOT": {
-                 let notResultArray: any[] = [];
-                 this.doFilter(section, subquery.NOT, notResultArray);    }
-                 break;
-         }*/
+            case "NOT": {
+                let notResultBoolean: boolean = true;
+                if (this.checkFilterCondMet(section, subquery.NOT)) {
+                    notResultBoolean = false;
+                }
+                return notResultBoolean;
+            }
         }
     }
     public filterIS(subquery: any, section: Section): boolean {
