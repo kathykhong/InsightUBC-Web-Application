@@ -2,7 +2,6 @@ import {InsightError, ResultTooLargeError} from "../controller/IInsightFacade";
 import InsightFacade from "../controller/InsightFacade";
 import {OptionsValidator} from "./OptionsValidator";
 import {WhereValidator} from "./WhereValidator";
-
 export class QueryValidator {
     public allFields: string[] = ["avg", "pass", "fail", "audit", "year", "dept", "id", "instructor", "title", "uuid"];
     public sFields: string[] = ["dept", "id", "instructor", "title", "uuid"];
@@ -15,51 +14,46 @@ export class QueryValidator {
     public columnFields: string[] = [];
     public insightFacade: InsightFacade = new InsightFacade();
     // first check if dataset is in our map, then check if dataset being queried has been added to data dir (disk)
-    public validateQuery(query: any): Promise<any> {
-        // check if query is empty
+    public validateQuery(query: any): void  {
         if (Object.keys(query).length === 0) {
-            return Promise.reject(new InsightError("Query is empty")); }
-        if (Object.keys(query).includes(null) || Object.keys(query).includes(undefined)) {
-            return Promise.reject(new InsightError("Query cannot contain null or undefined")); }
-        if (Object.values(query).includes(null) || Object.values(query).includes(undefined)) {
-            return Promise.reject(new InsightError("Query values cannot be null or undefined")); }
-        // check if query has exactly 2 arguments
-        if (Object.keys(query).length >= 2) {
-            if ((!Object.keys(query).includes("WHERE")) && !Object.keys(query).includes("OPTIONS")) {
-                return Promise.reject(new InsightError("Query must contain WHERE and OPTIONS arguments")); }
-            // for (const qkey in Object.keys(query)) {
-            //     if ((qkey !== "OPTIONS" && qkey !== "WHERE")) {
-            //         return Promise.reject(new InsightError("Query must contain WHERE and OPTIONS arguments")); }
-            // } todo
+            throw new InsightError("Query is empty");
         }
-        if (Object.keys(query).length === 2) {
-            // check that query has only a WHERE and an OPTIONS
-            if (!this.containsWHEREandOPTIONS(query)) {
-                return Promise.reject(new InsightError("Query must contain WHERE and OPTIONS blocks"));
-            } else {
-                let optionsValidator: OptionsValidator = new OptionsValidator();
-                let whereValidator: WhereValidator = new WhereValidator();
-                optionsValidator.validateOPTIONS(query, this);
-                whereValidator.validateWHERE(query, this);
-            }} // check if WHERE keys are all valid
+        if (Object.keys(query).includes(null) || Object.keys(query).includes(undefined)) {
+            throw new InsightError("Query cannot contain null or undefined");
+        }
+        if (Object.values(query).includes(null) || Object.values(query).includes(undefined)) {
+            throw new InsightError("Query values cannot be null or undefined");
+        }
+        // check if query has exactly 2 arguments
+        if (Object.keys(query).length !== 2) {
+            throw new InsightError("Query must contain WHERE and OPTIONS arguments");
+        }
+        // check that query has only a WHERE and an OPTIONS
+        this.containsWHEREandOPTIONS(query);
+        let optionsValidator: OptionsValidator = new OptionsValidator();
+        let whereValidator: WhereValidator = new WhereValidator();
+        optionsValidator.validateOPTIONS(query, this);
+        whereValidator.validateWHERE(query, this);
     }
+    // check if WHERE keys are all valid
     // Object.keys(query[operator])[0]
-    public containsWHEREandOPTIONS(query: any): Promise<any> {
+    public containsWHEREandOPTIONS(query: any): void {
         if (!Object.keys(query).includes("WHERE")) {
-            return Promise.reject(new InsightError("Query must contain a WHERE clause"));
+            throw new InsightError("Query must contain a WHERE clause");
         }
         if (!Object.keys(query).includes("OPTIONS")) {
-            return Promise.reject(new InsightError("Query must contain a OPTIONS clause"));
+            throw new InsightError("Query must contain a OPTIONS clause");
         }
-        if ((Object.keys(query)[0] !== "WHERE") || (Object.keys(query)[0] !== "OPTIONS")) {
-            return Promise.reject(new InsightError("Keys must be WHERE or OPTIONS only"));
+        // major issue here : logic is not correct debugger goes straight to error
+        /* if ((Object.keys(query)[0] !== "WHERE") || (Object.keys(query)[0] !== "OPTIONS")) {
+            throw new InsightError("Keys must be WHERE or OPTIONS only");
         }
         if ((Object.keys(query)[1] !== "WHERE") || (Object.keys(query)[1] !== "OPTIONS")) {
-            return Promise.reject(new InsightError("Keys must be WHERE or OPTIONS only"));
-        }
+            throw new InsightError("Keys must be WHERE or OPTIONS only");
+        }*/
         if ((Object.keys(query)[0] === "WHERE" && Object.keys(query)[1] !== "OPTIONS")
             || (Object.keys(query)[0] === "OPTIONS" && Object.keys(query)[1] !== "WHERE")) {
-            return Promise.reject(new InsightError("Keys must be WHERE or OPTIONS only"));
+            throw new InsightError("Keys must be WHERE or OPTIONS only");
         }}
     // todo: validate that all dataset ids match and are valid
     /*  public validateWHERE(query: any, queryValidator: QueryValidator): Promise<any> {
@@ -275,13 +269,11 @@ export class QueryValidator {
     public splitIDKey(idKey: string): string[] {
         return idKey.split("_");
     }
-    public isLengthAfterSplitTwo(arr: string[]): Promise<boolean> {
+    public isLengthAfterSplitTwo(arr: string[]): void {
         if (arr.length !== 2) {
-            return Promise.reject(new InsightError("IDKey contains more than 1 underscore"));
+            throw new InsightError("IDKey contains more than 1 underscore");
         }
-        return Promise.resolve(true);
     }
-
     public isValidIDString(ID: string): boolean {
         if (ID.length < 1) {return false; }
         if (ID.includes("_")) {return false; }

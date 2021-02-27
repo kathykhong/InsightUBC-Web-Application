@@ -7,6 +7,8 @@ import * as fs from "fs";
 import {Course} from "../dataModel/Course";
 import {Section} from "../dataModel/Section";
 import {QueryValidator} from "../queryModel/QueryValidator";
+import validate = WebAssembly.validate;
+import {QueryProcessor} from "../queryModel/QueryProcessor";
 
 /**
  * This is the main programmatic entry point for the project.
@@ -16,6 +18,7 @@ import {QueryValidator} from "../queryModel/QueryValidator";
 export default class InsightFacade implements IInsightFacade {
     public currentDatasets: string[] = [];
     public datasetsMap: Map<string, Dataset>;
+
     constructor() {
         Log.trace("InsightFacadeImpl::init()");
         this.datasetsMap = new Map();
@@ -44,17 +47,17 @@ export default class InsightFacade implements IInsightFacade {
                             return Promise.all(this.getResult(res));
                         })
                         .then((jsonresults: any[]) => {
-                             newDataset = this.extractJSON(jsonresults, newDataset);
-                             if (newDataset.getNumRows() === 0) {
-                                 return Promise.reject(new InsightError("Dataset contains 0 sections"));
-                             }
-                             // Log.trace(id);
-                             // Log.trace(jsonresults[1].result);
-                             this.datasetsMap.set(id, newDataset);
-                             fs.writeFileSync( "./data/" + id, JSON.stringify(jsonresults));
-                             this.currentDatasets.push(id);
-                             return Promise.resolve(this.currentDatasets);
-                             })
+                            newDataset = this.extractJSON(jsonresults, newDataset);
+                            if (newDataset.getNumRows() === 0) {
+                                return Promise.reject(new InsightError("Dataset contains 0 sections"));
+                            }
+                            // Log.trace(id);
+                            // Log.trace(jsonresults[1].result);
+                            this.datasetsMap.set(id, newDataset);
+                            fs.writeFileSync("./data/" + id, JSON.stringify(jsonresults));
+                            this.currentDatasets.push(id);
+                            return Promise.resolve(this.currentDatasets);
+                        })
                         .catch((err: any) => {
                             // Error unzipping
                             return Promise.reject(new InsightError(err));
@@ -63,6 +66,7 @@ export default class InsightFacade implements IInsightFacade {
             }
         }
     }
+
     // confirm with TA
     // fs.writeFileSync(".data/" + id + ".zip", content);
 
@@ -72,7 +76,7 @@ export default class InsightFacade implements IInsightFacade {
         let result: Array<Promise<any>> = [];
         // check that courses/ exists in the unzipped dir
         // foreach(item)
-       // Log.trace(r);
+        // Log.trace(r);
         // clarify with TA wtf .folder does
         r.folder("courses").forEach(function (pathname, file) {
             let prom: Promise<any>;
@@ -96,20 +100,20 @@ export default class InsightFacade implements IInsightFacade {
         let numRows = 0;
         let courseKey: string;
         for (const course of datasetJSONs) {
-                let newCourse: Course;
-                newCourse = new Course();
-                courseKey = "";
+            let newCourse: Course;
+            newCourse = new Course();
+            courseKey = "";
             // for each section object {} in the course (result:)
-                for (const section of course.result ) {
-                    let newSection: Section = new Section();
-                    this.setSectionFields(newSection, section);
-                    if (courseKey === "") {
-                            courseKey = section.Subject + section.id;
-                    }
-                    newCourse.getSections().push(newSection);
-                    numRows++;
+            for (const section of course.result) {
+                let newSection: Section = new Section();
+                this.setSectionFields(newSection, section);
+                if (courseKey === "") {
+                    courseKey = section.Subject + section.id;
+                }
+                newCourse.getSections().push(newSection);
+                numRows++;
             }
-                newDataset.getCourses().set(courseKey, newCourse);
+            newDataset.getCourses().set(courseKey, newCourse);
         }
         newDataset.setNumRows(numRows);
         return newDataset;
@@ -122,8 +126,8 @@ export default class InsightFacade implements IInsightFacade {
             newSection.setYear(parseInt(section.Year, 10));
         }
         newSection.setAudit(parseInt(section.Audit, 10));
-        newSection.setAvg(parseInt(section.Avg, 10));
-        newSection.setDept(section);
+        newSection.setAvg(parseFloat(section.Avg));
+        newSection.setDept(section.Subject);
         newSection.setFail(parseInt(section.Fail, 10));
         newSection.setPass(parseInt(section.Pass, 10));
         newSection.setId(section.Course);
@@ -137,7 +141,7 @@ export default class InsightFacade implements IInsightFacade {
         if (id.includes("_") || !id.trim() || id === "") {
             return Promise.reject(new InsightError("invalid id"));
         }
-        if (!this.currentDatasets.includes(id) || this.currentDatasets.length === 0 ) {
+        if (!this.currentDatasets.includes(id) || this.currentDatasets.length === 0) {
             return Promise.reject((new NotFoundError("id is not found")));
         }
         if (!this.datasetsMap.has(id) || this.datasetsMap.size === 0) {
@@ -189,12 +193,42 @@ export default class InsightFacade implements IInsightFacade {
         try {
             let validator: QueryValidator = new QueryValidator();
             // check if query is valid
-            if (!validator.validateQuery(query)) {
-                return Promise.reject(new InsightError("Query is invalid"));
+            validator.validateQuery(query);
+            let resultSectionObjects: any[] = [];
+            let datasetIDToQuery: string = validator.columnIDString;
+            if (!this.datasetsMap.has(datasetIDToQuery)) {
+                throw new InsightError("reference dataset not added yet");
             }
+            let dataset: Dataset = this.datasetsMap.get(datasetIDToQuery);
+            let qp: QueryProcessor = new QueryProcessor();
+            for (const course of dataset.getCourses().values()) {
+                for (const section of course.getSections()) {
+                    if (qp.checkFilterCondMet(section, query.WHERE)) {
+                        resultSectionObjects.push(section);
+                    }
+                }
+            }
+            let resultObjects: any[] = [];
+            let courseID = validator.columnIDString;
+            for (const sectionObject of resultSectionObjects) {
+                let jsonResultElt: any = new Object();
+                for (const arg of validator.columnFields) {
+                    jsonResultElt[courseID + "_" + arg] = sectionObject.getArg(arg);
+                }
+                resultObjects.push(jsonResultElt);
+            }
+            if (Object.keys(resultObjects).length > 5000) {
+                throw new ResultTooLargeError("there cannot be more than 5000 results");
+            }
+
+            if (Object.keys(query.OPTIONS).length === 2)  {
+                let argSort = query.OPTIONS.ORDER;
+                resultObjects.sort((a, b) => a[argSort] - b[argSort]);
+            }
+            return Promise.resolve(resultObjects);
         } catch (err) {
-            Promise.reject(err);
+            return Promise.reject(err);
         }
     }
-
 }
+
