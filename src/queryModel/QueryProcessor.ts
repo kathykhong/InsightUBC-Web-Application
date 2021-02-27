@@ -41,6 +41,8 @@ export class QueryProcessor {
                 }
                 return notResultBoolean;
             }
+            default:
+                return false;
         }
     }
     public filterIS(subquery: any, section: Section): boolean {
@@ -67,6 +69,8 @@ export class QueryProcessor {
             case "uuid": {
                 return section.getYear() === sValue;
             }
+            default:
+                return false;
         }
 
     }
@@ -95,6 +99,8 @@ export class QueryProcessor {
             case "year": {
                 return section.getYear() < mValue;
             }
+            default:
+                return false;
         }
     }
 
@@ -122,6 +128,8 @@ export class QueryProcessor {
             case "year": {
                 return section.getYear() > mValue;
             }
+            default:
+                return false;
         }
     }
 
@@ -154,6 +162,8 @@ export class QueryProcessor {
                 return section.getYear() === mValue;
                 break;
             }
+            default:
+                return false;
         }
     }
 }
