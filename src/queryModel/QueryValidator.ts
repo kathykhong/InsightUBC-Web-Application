@@ -14,6 +14,7 @@ export class QueryValidator {
         "title",
         "uuid",
     ];
+
     public sFields: string[] = ["dept", "id", "instructor", "title", "uuid"];
     public mFields: string[] = ["avg", "pass", "fail", "audit", "year"];
     public allFilters: string[] = ["LT", "GT", "EQ", "IS", "AND", "OR", "NOT"];
@@ -53,6 +54,7 @@ export class QueryValidator {
         optionsValidator.validateOPTIONS(query, this);
         whereValidator.validateWHERE(query, this);
     }
+
     // check if WHERE keys are all valid
     // Object.keys(query[operator])[0]
     public containsWHEREandOPTIONS(query: any): void {

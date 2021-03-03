@@ -138,7 +138,7 @@ export class WhereValidator {
             );
         }
     }
-    // todo: check this again
+
     public validateIS(subquery: any, queryValidator: QueryValidator): void {
         containsNullOrUndefined(Object.keys(subquery));
         containsNullOrUndefined(Object.values(subquery));
