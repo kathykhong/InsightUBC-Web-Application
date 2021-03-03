@@ -1,14 +1,20 @@
 import Log from "../Util";
-import {IInsightFacade, InsightDataset, InsightDatasetKind, InsightError, NotFoundError, ResultTooLargeError
+import {
+    IInsightFacade,
+    InsightDataset,
+    InsightDatasetKind,
+    InsightError,
+    NotFoundError,
+    ResultTooLargeError,
 } from "./IInsightFacade";
-import {Dataset} from "../dataModel/Dataset";
+import { Dataset } from "../dataModel/Dataset";
 import * as JSZip from "jszip";
 import * as fs from "fs";
-import {Course} from "../dataModel/Course";
-import {Section} from "../dataModel/Section";
-import {QueryValidator} from "../queryModel/QueryValidator";
+import { Course } from "../dataModel/Course";
+import { Section } from "../dataModel/Section";
+import { QueryValidator } from "../queryModel/QueryValidator";
 import validate = WebAssembly.validate;
-import {QueryProcessor} from "../queryModel/QueryProcessor";
+import { QueryProcessor } from "../queryModel/QueryProcessor";
 
 /**
  * This is the main programmatic entry point for the project.
@@ -24,37 +30,56 @@ export default class InsightFacade implements IInsightFacade {
         this.datasetsMap = new Map();
     }
 
-// TODO: valid zip file check
-    public addDataset(id: string, content: string, kind: InsightDatasetKind): Promise<string[]> {
+    // TODO: valid zip file check
+    public addDataset(
+        id: string,
+        content: string,
+        kind: InsightDatasetKind,
+    ): Promise<string[]> {
         // check id validity
         if (id.includes("_") || !id.trim() || id === "") {
             return Promise.reject(new InsightError("invalid id"));
         } else {
             // check kinds validity
             if (kind === InsightDatasetKind.Rooms) {
-                return Promise.reject(new InsightError("insightDataSetKind is Rooms"));
+                return Promise.reject(
+                    new InsightError("insightDataSetKind is Rooms"),
+                );
             } else {
                 // alternative ensureFileSync
                 if (fs.existsSync(".data/" + id + ".zip")) {
-                    return Promise.reject(new InsightError("file already added"));
+                    return Promise.reject(
+                        new InsightError("file already added"),
+                    );
                 } else {
                     let newDataset: Dataset;
                     newDataset = new Dataset(id, kind);
                     // unzip
                     let zip = new JSZip();
-                    return zip.loadAsync(content, {base64: true})
+                    return zip
+                        .loadAsync(content, { base64: true })
                         .then((res) => {
                             return Promise.all(this.getResult(res));
                         })
                         .then((jsonresults: any[]) => {
-                            newDataset = this.extractJSON(jsonresults, newDataset);
+                            newDataset = this.extractJSON(
+                                jsonresults,
+                                newDataset,
+                            );
                             if (newDataset.getNumRows() === 0) {
-                                return Promise.reject(new InsightError("Dataset contains 0 sections"));
+                                return Promise.reject(
+                                    new InsightError(
+                                        "Dataset contains 0 sections",
+                                    ),
+                                );
                             }
                             // Log.trace(id);
                             // Log.trace(jsonresults[1].result);
                             this.datasetsMap.set(id, newDataset);
-                            fs.writeFileSync("./data/" + id, JSON.stringify(jsonresults));
+                            fs.writeFileSync(
+                                "./data/" + id,
+                                JSON.stringify(jsonresults),
+                            );
                             this.currentDatasets.push(id);
                             return Promise.resolve(this.currentDatasets);
                         })
@@ -69,7 +94,6 @@ export default class InsightFacade implements IInsightFacade {
 
     // confirm with TA
     // fs.writeFileSync(".data/" + id + ".zip", content);
-
 
     // return an array of promises. each promise for each file.async
     public getResult(r: JSZip): Array<Promise<any>> {
@@ -141,11 +165,14 @@ export default class InsightFacade implements IInsightFacade {
         if (id.includes("_") || !id.trim() || id === "") {
             return Promise.reject(new InsightError("invalid id"));
         }
-        if (!this.currentDatasets.includes(id) || this.currentDatasets.length === 0) {
-            return Promise.reject((new NotFoundError("id is not found")));
+        if (
+            !this.currentDatasets.includes(id) ||
+            this.currentDatasets.length === 0
+        ) {
+            return Promise.reject(new NotFoundError("id is not found"));
         }
         if (!this.datasetsMap.has(id) || this.datasetsMap.size === 0) {
-            return Promise.reject((new NotFoundError("id is not found")));
+            return Promise.reject(new NotFoundError("id is not found"));
         }
 
         // remove from data dir
@@ -173,7 +200,7 @@ export default class InsightFacade implements IInsightFacade {
             let currDS: InsightDataset = {
                 id: this.datasetsMap.get(dsid).getDatasetID(),
                 kind: InsightDatasetKind.Courses,
-                numRows: this.datasetsMap.get(dsid).getNumRows()
+                numRows: this.datasetsMap.get(dsid).getNumRows(),
             };
             result.push(currDS);
         }
@@ -213,15 +240,19 @@ export default class InsightFacade implements IInsightFacade {
             for (const sectionObject of resultSectionObjects) {
                 let jsonResultElt: any = new Object();
                 for (const arg of validator.columnFields) {
-                    jsonResultElt[courseID + "_" + arg] = sectionObject.getArg(arg);
+                    jsonResultElt[courseID + "_" + arg] = sectionObject.getArg(
+                        arg,
+                    );
                 }
                 resultObjects.push(jsonResultElt);
             }
             if (Object.keys(resultObjects).length > 5000) {
-                throw new ResultTooLargeError("there cannot be more than 5000 results");
+                throw new ResultTooLargeError(
+                    "there cannot be more than 5000 results",
+                );
             }
 
-            if (Object.keys(query.OPTIONS).length === 2)  {
+            if (Object.keys(query.OPTIONS).length === 2) {
                 let argSort = query.OPTIONS.ORDER;
                 resultObjects.sort((a, b) => a[argSort] - b[argSort]);
             }
@@ -231,4 +262,3 @@ export default class InsightFacade implements IInsightFacade {
         }
     }
 }
-

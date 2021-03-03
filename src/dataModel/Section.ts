@@ -1,4 +1,4 @@
-import {InsightError} from "../controller/IInsightFacade";
+import { InsightError } from "../controller/IInsightFacade";
 
 export class Section {
     // numerical fields

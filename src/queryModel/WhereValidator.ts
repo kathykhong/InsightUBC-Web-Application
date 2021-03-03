@@ -1,15 +1,20 @@
-import {InsightError} from "../controller/IInsightFacade";
-import {QueryValidator} from "./QueryValidator";
+import { InsightError } from "../controller/IInsightFacade";
+import { QueryValidator } from "./QueryValidator";
+
+function containsNullOrUndefined(keysOrValsArr: string[]) {
+    if (
+        keysOrValsArr.includes(null) ||
+        keysOrValsArr.includes(undefined)
+    ) {
+        throw new InsightError("Query cannot contain null or undefined");
+    }
+}
 
 export class WhereValidator {
     public validateWHERE(query: any, queryValidator: QueryValidator): void {
         // check if WHERE contains null or undefined values
-        if (Object.keys(query).includes(null) || Object.keys(query).includes(undefined)) {
-            throw new InsightError("Query cannot contain null or undefined");
-        }
-        if (Object.values(query).includes(null) || Object.values(query).includes(undefined)) {
-            throw new InsightError("Query values cannot be null or undefined");
-        }
+        containsNullOrUndefined(Object.keys(query));
+        containsNullOrUndefined(Object.values(query));
         // check if WHERE clause exists, maybe redundant if caller is checking
         // added a not here
         if (!Object.keys(query).includes("WHERE")) {
@@ -31,9 +36,7 @@ export class WhereValidator {
         this.validateFilter(query.WHERE, queryValidator);
         // if it's an AND, an OR, or a NOT
     }
-    // if its an M or Scomp, return, if its an Logic or Negation, recurse???
-    // todo: figure out how the recursive calls work, what are we passing in to get all filters for the next level
-    // todo: Object.keys(query.WHERE)[0] can't be called at for each level of recursion???? help
+
     public validateFilter(subquery: any, queryValidator: QueryValidator): void {
         switch (Object.keys(subquery)[0]) {
             case "LT": {
@@ -85,28 +88,31 @@ export class WhereValidator {
     }
 
     public validateMComp(query: any, queryValidator: QueryValidator): void {
-        // check if WHERE contains null or undefined values
-        if (Object.keys(query).includes(null) || Object.keys(query).includes(undefined)) {
-            throw new InsightError("Query cannot contain null or undefined");
-        }
-        if (Object.values(query).includes(null) || Object.values(query).includes(undefined)) {
-            throw new InsightError("Query values cannot be null or undefined");
-        }
+        containsNullOrUndefined (Object.keys(query));
+        containsNullOrUndefined(Object.values(query));
         // check that LT/GT/EQ is not empty
         // query = { GT: {"dsid_field": 98} }
         // query[0] = {"dsid_field": 98}
         // todo: check this logic again
         const operator: string = Object.keys(query)[0];
         if (Object.keys(query).length !== 1) {
-            throw new InsightError(operator + " block must have strictly one argument");
+            throw new InsightError(
+                operator + " block must have strictly one argument",
+            );
         }
         if (Object.keys(query[operator]).length !== 1) {
-            throw new InsightError(operator + " block must have one idstring_field argument");
+            throw new InsightError(
+                operator + " block must have one idstring_field argument",
+            );
         }
         // check that LT's key:value value is a number
         // query[0][0] = 98
         let argValueMCOMP = Object.values(query[operator])[0];
-        if (typeof argValueMCOMP !== "number" || typeof argValueMCOMP === null || typeof argValueMCOMP === undefined) {
+        if (
+            typeof argValueMCOMP !== "number" ||
+            typeof argValueMCOMP === null ||
+            typeof argValueMCOMP === undefined
+        ) {
             throw new InsightError(operator + " must compare to a number");
         }
         // check that LT is calling on a valid mfield
@@ -115,7 +121,9 @@ export class WhereValidator {
         idStringMCOMParr = queryValidator.splitIDKey(argKeyMCOMP);
         // check that the id is valid
         if (idStringMCOMParr.length !== 2) {
-            throw new InsightError("More than one underscore was detected in MComp Filter");
+            throw new InsightError(
+                "More than one underscore was detected in MComp Filter",
+            );
         }
         if (!queryValidator.isValidIDString(idStringMCOMParr[0])) {
             throw new InsightError("invalid ID");
@@ -125,24 +133,23 @@ export class WhereValidator {
         }
         // check that id matches all other ids in the query
         if (idStringMCOMParr[0] !== queryValidator.columnIDString) {
-            throw new InsightError("dataset ID must match the rest of the query");
+            throw new InsightError(
+                "dataset ID must match the rest of the query",
+            );
         }
     }
-// todo: check this again
-    public validateIS (subquery: any, queryValidator: QueryValidator): void {
-        if (Object.keys(subquery).includes(null) || Object.keys(subquery).includes(undefined)) {
-            throw new InsightError("Query cannot contain null or undefined");
-        }
-        if (Object.values(subquery).includes(null) || Object.values(subquery).includes(undefined)) {
-            throw new InsightError("Query values cannot be null or undefined");
-        }
+    // todo: check this again
+    public validateIS(subquery: any, queryValidator: QueryValidator): void {
+        containsNullOrUndefined(Object.keys(subquery));
+        containsNullOrUndefined(Object.values(subquery));
         if (Object.keys(subquery).length !== 1) {
-            throw new InsightError( " block must have strictly one argument");
+            throw new InsightError(" block must have strictly one argument");
         }
         const operatorIS: string = Object.keys(subquery)[0];
         let objectInIS = Object.values(subquery)[0]; // stuff inside IS:
         if (Object.keys(objectInIS).length !== 1) {
-            throw new InsightError(operatorIS + " block must have one idstring_field: inputString argument");
+            throw new InsightError(operatorIS + " block must have one idstring_field: inputString argument",
+            );
         }
         let argValueIS = Object.values(objectInIS)[0];
         if (typeof argValueIS !== "string" || typeof argValueIS === null || typeof argValueIS === undefined) {
@@ -156,7 +163,9 @@ export class WhereValidator {
         inputStringArr = inputStringIs.split("");
         // check that the id is valid
         if (idStringISarr.length !== 2) {
-            throw new InsightError("More than one underscore was detected in IS Filter");
+            throw new InsightError(
+                "More than one underscore was detected in IS Filter",
+            );
         }
         if (!queryValidator.isValidIDString(idStringISarr[0])) {
             throw new InsightError("invalid ID");
@@ -165,19 +174,35 @@ export class WhereValidator {
             throw new InsightError("invalid sfield specified in IS Filter");
         }
         if (idStringISarr[0] !== queryValidator.columnIDString) {
-            throw new InsightError("dataset ID must match the rest of the query");
+            throw new InsightError(
+                "dataset ID must match the rest of the query",
+            );
         }
+        this.validateISAsterisk(inputStringArr, inputStringIs);
+    }
+
+    private validateISAsterisk(inputStringArr: string[], inputStringIs: any) {
         if (this.countOccurences(inputStringArr, "*") >= 3) {
-            throw new InsightError("More than 2 asterisks detected in inputString ");
+            throw new InsightError(
+                "More than 2 asterisks detected in inputString ",
+            );
         }
         if (this.countOccurences(inputStringArr, "*") === 2) {
-            if (!(inputStringIs.startsWith("*") && inputStringIs.endsWith("*"))) {
-                throw new InsightError("if there are 2 asterisks they must be at start and end of string");
+            if (
+                !(inputStringIs.startsWith("*") && inputStringIs.endsWith("*"))
+            ) {
+                throw new InsightError(
+                    "if there are 2 asterisks they must be at start and end of string",
+                );
             }
         }
         if (this.countOccurences(inputStringArr, "*") === 1) {
-            if (!(inputStringIs.startsWith("*") || inputStringIs.endsWith(("*")))) {
-                throw new InsightError("if there is only 1 asterisk, it must be at start or end of string");
+            if (
+                !(inputStringIs.startsWith("*") || inputStringIs.endsWith("*"))
+            ) {
+                throw new InsightError(
+                    "if there is only 1 asterisk, it must be at start or end of string",
+                );
             }
         }
     }
@@ -187,12 +212,13 @@ export class WhereValidator {
         let i;
         for (i = 0; i < array.length; i++) {
             if (array[i] === myString) {
-                count++; }
+                count++;
+            }
         }
         return count;
     }
 
-    public validateAND (subquery: any): void {
+    public validateAND(subquery: any): void {
         // removed bottom , and array length should be 2 or greater
         /*if (Object.values(subquery.AND).length !== 1) {
             throw new InsightError("AND must contain one value only");
@@ -209,7 +235,9 @@ export class WhereValidator {
             throw new InsightError("AND cannot contain null or undefined");
         }
         if (subquery.AND.length <= 1) {
-            throw new InsightError("AND's array must contain at least 2 filters");
+            throw new InsightError(
+                "AND's array must contain at least 2 filters",
+            );
         }
     }
 
@@ -230,7 +258,9 @@ export class WhereValidator {
             throw new InsightError("OR cannot contain null or undefined");
         }
         if (subquery.OR.length <= 1) {
-            throw new InsightError("OR's array must contain at least 2 filters");
+            throw new InsightError(
+                "OR's array must contain at least 2 filters",
+            );
         }
     }
 
@@ -245,12 +275,12 @@ export class WhereValidator {
             throw new InsightError("NOT's value must be a single object");
         }
         const innerFilter: string = Object.keys(subquery.NOT)[0];
-        if (! this.isValidFilterKey(innerFilter, "all", queryValidator)) {
+        if (!this.isValidFilterKey(innerFilter, "all", queryValidator)) {
             throw new InsightError("NOT's inner filter must be valid filter");
         }
     }
 
-    public isValidFilterKey(filter: string, type: string, queryValidator: QueryValidator): boolean {
+    public isValidFilterKey(filter: string, type: string, queryValidator: QueryValidator, ): boolean {
         if (type === "all") {
             return queryValidator.allFilters.includes(filter);
         }

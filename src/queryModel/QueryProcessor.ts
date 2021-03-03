@@ -1,5 +1,5 @@
-import {Section} from "../dataModel/Section";
-import {InsightError} from "../controller/IInsightFacade";
+import { Section } from "../dataModel/Section";
+import { InsightError } from "../controller/IInsightFacade";
 
 export class QueryProcessor {
     public checkFilterCondMet(section: Section, subquery: any): boolean {
@@ -43,6 +43,7 @@ export class QueryProcessor {
             }
         }
     }
+
     public filterIS(subquery: any, section: Section): boolean {
         const operatorIS: string = Object.keys(subquery)[0];
         let idStringISarr: string[];
@@ -67,7 +68,6 @@ export class QueryProcessor {
                 return this.checkWildCards(section.getUuid(), sValue);
             }
         }
-
     }
 
     public checkWildCards(sfield: string, sValue: string): boolean {
@@ -75,11 +75,11 @@ export class QueryProcessor {
         if (sValue.startsWith("*") && sValue.endsWith("*")) {
             return sfield.includes(sValueArr[1]);
         }
-        if ((sValue.startsWith("*") && !sValue.endsWith("*"))) {
+        if (sValue.startsWith("*") && !sValue.endsWith("*")) {
             return sfield.endsWith(sValueArr[1]);
         }
 
-        if ((!sValue.startsWith("*") && sValue.endsWith("*"))) {
+        if (!sValue.startsWith("*") && sValue.endsWith("*")) {
             return sfield.startsWith(sValueArr[0]);
         }
         if (!sValue.includes("*")) {
@@ -139,7 +139,6 @@ export class QueryProcessor {
         }
     }
 
-
     public filterEQ(subquery: any, section: Section): boolean {
         const operatorEQ: string = Object.keys(subquery)[0];
         let idStringEQarr: string[];
@@ -170,4 +169,3 @@ export class QueryProcessor {
         }
     }
 }
-

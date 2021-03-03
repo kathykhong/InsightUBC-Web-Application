@@ -1,5 +1,5 @@
-import {InsightError} from "../controller/IInsightFacade";
-import {QueryValidator} from "./QueryValidator";
+import { InsightError } from "../controller/IInsightFacade";
+import { QueryValidator } from "./QueryValidator";
 
 // TODO: can OPTIONS contain multiple COLUMNS, and multiple ORDERS
 // TODO: can OPTIONS contain multiple COLUMNS, and no ORDERS
@@ -11,11 +11,19 @@ export class OptionsValidator {
             throw new InsightError("Query must contain valid OPTIONS");
         }
         // check if OPTIONS contains null or undefined values
-        if (Object.keys(query.OPTIONS).includes(null) || Object.keys(query.OPTIONS).includes(undefined)) {
+        if (
+            Object.keys(query.OPTIONS).includes(null) ||
+            Object.keys(query.OPTIONS).includes(undefined)
+        ) {
             throw new InsightError("OPTIONS cannot contain null or undefined");
         }
-        if (Object.values(query.OPTIONS).includes(null) || Object.values(query.OPTIONS).includes(undefined)) {
-            throw new InsightError("OPTIONS values cannot be null or undefined");
+        if (
+            Object.values(query.OPTIONS).includes(null) ||
+            Object.values(query.OPTIONS).includes(undefined)
+        ) {
+            throw new InsightError(
+                "OPTIONS values cannot be null or undefined",
+            );
         }
         // check if OPTIONS clause exists but is empty
         if (Object.keys(query.OPTIONS).length === 0) {
@@ -55,8 +63,12 @@ export class OptionsValidator {
         if (!Object.keys(query.OPTIONS).includes("ORDER")) {
             throw new InsightError("Options with length 2 must contain order");
         }
-        if ((Object.keys(query.OPTIONS)[0] === "COLUMNS" && Object.keys(query.OPTIONS)[1] !== "ORDER")
-            || (Object.keys(query.OPTIONS)[0] === "ORDER" && Object.keys(query.OPTIONS)[1] !== "COLUMNS")) {
+        if (
+            (Object.keys(query.OPTIONS)[0] === "COLUMNS" &&
+                Object.keys(query.OPTIONS)[1] !== "ORDER") ||
+            (Object.keys(query.OPTIONS)[0] === "ORDER" &&
+                Object.keys(query.OPTIONS)[1] !== "COLUMNS")
+        ) {
             throw new InsightError("Keys must be COLUMNS or ORDER only");
         }
     }
@@ -68,8 +80,13 @@ export class OptionsValidator {
             throw new InsightError("COLUMNS' value must be an array");
         }
 
-        if ((query.OPTIONS.COLUMNS.includes(null)) || (query.OPTIONS.COLUMNS.includes(undefined))) {
-            throw new InsightError("COLUMNS' array cannot contain null or undefined");
+        if (
+            query.OPTIONS.COLUMNS.includes(null) ||
+            query.OPTIONS.COLUMNS.includes(undefined)
+        ) {
+            throw new InsightError(
+                "COLUMNS' array cannot contain null or undefined",
+            );
         }
         // check that COLUMNS has at least one key
         if (query.OPTIONS.COLUMNS.length < 1) {
@@ -132,12 +149,16 @@ export class OptionsValidator {
             throw new InsightError("Invalid key");
         }
         if (queryValidator.columnIDString !== currID) {
-            throw new InsightError("Dataset ID must match all other dataset IDs in this query");
+            throw new InsightError(
+                "Dataset ID must match all other dataset IDs in this query",
+            );
         }
         // check if ORDER's (singular) key is included in COLUMNS
         // added a not here
         if (!queryValidator.columnFields.includes(currKey)) {
-            throw new InsightError("ORDER key must be included in COLUMNS keys ");
+            throw new InsightError(
+                "ORDER key must be included in COLUMNS keys ",
+            );
         }
     }
 }

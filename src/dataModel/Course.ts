@@ -1,4 +1,4 @@
-import {Section} from "./Section";
+import { Section } from "./Section";
 
 export class Course {
     protected sections: Section[];
@@ -6,7 +6,6 @@ export class Course {
     constructor() {
         this.sections = [];
     }
-
 
     public getSections(): Section[] {
         return this.sections;
