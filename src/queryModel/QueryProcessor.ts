@@ -1,5 +1,5 @@
-import {Section} from "../dataModel/Section";
-import {InsightError} from "../controller/IInsightFacade";
+import { Section } from "../dataModel/Section";
+import { InsightError } from "../controller/IInsightFacade";
 
 export class QueryProcessor {
     public checkFilterCondMet(section: Section, subquery: any): boolean {
@@ -41,38 +41,50 @@ export class QueryProcessor {
                 }
                 return notResultBoolean;
             }
-            default:
-                return false;
         }
     }
+
     public filterIS(subquery: any, section: Section): boolean {
         const operatorIS: string = Object.keys(subquery)[0];
         let idStringISarr: string[];
         let argKeyIS = Object.keys(subquery[operatorIS])[0];
         idStringISarr = argKeyIS.split("_");
-        let idString: string = idStringISarr[0];
         let sfield: string = idStringISarr[1];
         let sValue: any = Object.values(subquery[operatorIS])[0];
         switch (sfield) {
             case "dept": {
-                return section.getDept() === sValue;
+                return this.checkWildCards(section.getDept(), sValue);
             }
             case "id": {
-                return section.getPass() === sValue;
+                return this.checkWildCards(section.getId(), sValue);
             }
             case "instructor": {
-                return section.getFail() === sValue;
+                return this.checkWildCards(section.getInstructor(), sValue);
             }
             case "title": {
-                return section.getAudit() === sValue;
+                return this.checkWildCards(section.getTitle(), sValue);
             }
             case "uuid": {
-                return section.getYear() === sValue;
+                return this.checkWildCards(section.getUuid(), sValue);
             }
-            default:
-                return false;
+        }
+    }
+
+    public checkWildCards(sfield: string, sValue: string): boolean {
+        let sValueArr = sValue.split("*");
+        if (sValue.startsWith("*") && sValue.endsWith("*")) {
+            return sfield.includes(sValueArr[1]);
+        }
+        if (sValue.startsWith("*") && !sValue.endsWith("*")) {
+            return sfield.endsWith(sValueArr[1]);
         }
 
+        if (!sValue.startsWith("*") && sValue.endsWith("*")) {
+            return sfield.startsWith(sValueArr[0]);
+        }
+        if (!sValue.includes("*")) {
+            return sfield === sValue;
+        }
     }
 
     public filterLT(subquery: any, section: Section): boolean {
@@ -80,7 +92,6 @@ export class QueryProcessor {
         let idStringLTarr: string[];
         let argKeyLT = Object.keys(subquery[operatorLT])[0];
         idStringLTarr = argKeyLT.split("_");
-        let idString: string = idStringLTarr[0];
         let mfield: string = idStringLTarr[1];
         let mValue: any = Object.values(subquery[operatorLT])[0];
         switch (mfield) {
@@ -99,8 +110,6 @@ export class QueryProcessor {
             case "year": {
                 return section.getYear() < mValue;
             }
-            default:
-                return false;
         }
     }
 
@@ -109,7 +118,6 @@ export class QueryProcessor {
         let idStringGTarr: string[];
         let argKeyGT = Object.keys(subquery[operatorGT])[0];
         idStringGTarr = argKeyGT.split("_");
-        let idString: string = idStringGTarr[0];
         let mfield: string = idStringGTarr[1];
         let mValue: any = Object.values(subquery[operatorGT])[0];
         switch (mfield) {
@@ -128,18 +136,14 @@ export class QueryProcessor {
             case "year": {
                 return section.getYear() > mValue;
             }
-            default:
-                return false;
         }
     }
-
 
     public filterEQ(subquery: any, section: Section): boolean {
         const operatorEQ: string = Object.keys(subquery)[0];
         let idStringEQarr: string[];
         let argKeyEQ = Object.keys(subquery[operatorEQ])[0];
         idStringEQarr = argKeyEQ.split("_");
-        let idString: string = idStringEQarr[0];
         let mfield: string = idStringEQarr[1];
         let mValue: any = Object.values(subquery[operatorEQ])[0];
         switch (mfield) {
@@ -162,9 +166,6 @@ export class QueryProcessor {
                 return section.getYear() === mValue;
                 break;
             }
-            default:
-                return false;
         }
     }
 }
-
