@@ -1,6 +1,5 @@
-import {InsightError, ResultTooLargeError} from "../controller/IInsightFacade";
+import {InsightError} from "../controller/IInsightFacade";
 import {QueryValidator} from "./QueryValidator";
-import Log from "../Util";
 
 export class WhereValidator {
     public validateWHERE(query: any, queryValidator: QueryValidator): void {
@@ -32,7 +31,6 @@ export class WhereValidator {
         this.validateFilter(query.WHERE, queryValidator);
         // if it's an AND, an OR, or a NOT
     }
-
     // if its an M or Scomp, return, if its an Logic or Negation, recurse???
     // todo: figure out how the recursive calls work, what are we passing in to get all filters for the next level
     // todo: Object.keys(query.WHERE)[0] can't be called at for each level of recursion???? help
@@ -99,7 +97,6 @@ export class WhereValidator {
         // query[0] = {"dsid_field": 98}
         // todo: check this logic again
         const operator: string = Object.keys(query)[0];
-
         if (Object.keys(query).length !== 1) {
             throw new InsightError(operator + " block must have strictly one argument");
         }
@@ -108,30 +105,30 @@ export class WhereValidator {
         }
         // check that LT's key:value value is a number
         // query[0][0] = 98
-        let argValueLT = Object.values(query[operator])[0];
-        if (typeof argValueLT !== "number" || typeof argValueLT === null || typeof argValueLT === undefined) {
+        let argValueMCOMP = Object.values(query[operator])[0];
+        if (typeof argValueMCOMP !== "number" || typeof argValueMCOMP === null || typeof argValueMCOMP === undefined) {
             throw new InsightError(operator + " must compare to a number");
         }
         // check that LT is calling on a valid mfield
-        let idStringLTarr: string[];
-        let argKeyLT = Object.keys(query[operator])[0];
-        idStringLTarr = queryValidator.splitIDKey(argKeyLT);
+        let idStringMCOMParr: string[];
+        let argKeyMCOMP = Object.keys(query[operator])[0];
+        idStringMCOMParr = queryValidator.splitIDKey(argKeyMCOMP);
         // check that the id is valid
-        if (idStringLTarr.length !== 2) {
+        if (idStringMCOMParr.length !== 2) {
             throw new InsightError("More than one underscore was detected in MComp Filter");
         }
-        if (!queryValidator.isValidIDString(idStringLTarr[0])) {
+        if (!queryValidator.isValidIDString(idStringMCOMParr[0])) {
             throw new InsightError("invalid ID");
         }
-        if (!queryValidator.isValidField(idStringLTarr[1], "mField")) {
+        if (!queryValidator.isValidField(idStringMCOMParr[1], "mField")) {
             throw new InsightError("invalid mfield specified in MComp Filter");
         }
         // check that id matches all other ids in the query
-        if (idStringLTarr[0] !== queryValidator.columnIDString) {
+        if (idStringMCOMParr[0] !== queryValidator.columnIDString) {
             throw new InsightError("dataset ID must match the rest of the query");
         }
     }
-
+// todo: check this again
     public validateIS (subquery: any, queryValidator: QueryValidator): void {
         if (Object.keys(subquery).includes(null) || Object.keys(subquery).includes(undefined)) {
             throw new InsightError("Query cannot contain null or undefined");
@@ -139,25 +136,27 @@ export class WhereValidator {
         if (Object.values(subquery).includes(null) || Object.values(subquery).includes(undefined)) {
             throw new InsightError("Query values cannot be null or undefined");
         }
-// todo: check this again
         if (Object.keys(subquery).length !== 1) {
             throw new InsightError( " block must have strictly one argument");
         }
         const operatorIS: string = Object.keys(subquery)[0];
-        if (Object.keys(subquery[operatorIS]).length !== 1) {
-            throw new InsightError(operatorIS + " block must have one idstring_field argument");
+        let objectInIS = Object.values(subquery)[0]; // stuff inside IS:
+        if (Object.keys(objectInIS).length !== 1) {
+            throw new InsightError(operatorIS + " block must have one idstring_field: inputString argument");
         }
-        let argValueIS = Object.values(subquery[operatorIS])[0];
+        let argValueIS = Object.values(objectInIS)[0];
         if (typeof argValueIS !== "string" || typeof argValueIS === null || typeof argValueIS === undefined) {
             throw new InsightError(operatorIS + " must compare to a string");
         }
-
         let idStringISarr: string[];
-        let argKeyIS = Object.keys(subquery[operatorIS])[0];
+        let argKeyIS = Object.keys(objectInIS)[0];
         idStringISarr = queryValidator.splitIDKey(argKeyIS);
+        let inputStringIs: any = Object.values(objectInIS)[0];
+        let inputStringArr: string[];
+        inputStringArr = inputStringIs.split("");
         // check that the id is valid
         if (idStringISarr.length !== 2) {
-            throw new InsightError("More than one underscore was detected in MComp Filter");
+            throw new InsightError("More than one underscore was detected in IS Filter");
         }
         if (!queryValidator.isValidIDString(idStringISarr[0])) {
             throw new InsightError("invalid ID");
@@ -165,10 +164,32 @@ export class WhereValidator {
         if (!queryValidator.isValidField(idStringISarr[1], "sField")) {
             throw new InsightError("invalid sfield specified in IS Filter");
         }
-        // check that id matches all other ids in the query
         if (idStringISarr[0] !== queryValidator.columnIDString) {
             throw new InsightError("dataset ID must match the rest of the query");
         }
+        if (this.countOccurences(inputStringArr, "*") >= 3) {
+            throw new InsightError("More than 2 asterisks detected in inputString ");
+        }
+        if (this.countOccurences(inputStringArr, "*") === 2) {
+            if (!(inputStringIs.startsWith("*") && inputStringIs.endsWith("*"))) {
+                throw new InsightError("if there are 2 asterisks they must be at start and end of string");
+            }
+        }
+        if (this.countOccurences(inputStringArr, "*") === 1) {
+            if (!(inputStringIs.startsWith("*") || inputStringIs.endsWith(("*")))) {
+                throw new InsightError("if there is only 1 asterisk, it must be at start or end of string");
+            }
+        }
+    }
+
+    public countOccurences(array: string[], myString: string): number {
+        let count = 0;
+        let i;
+        for (i = 0; i < array.length; i++) {
+            if (array[i] === myString) {
+                count++; }
+        }
+        return count;
     }
 
     public validateAND (subquery: any): void {

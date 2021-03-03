@@ -3,7 +3,7 @@
     "query": {
         "WHERE": {
             "IS": {
-                "courses_dept": ""
+                "courses_dept": "*che*m"
             }
         },
         "OPTIONS": {
@@ -13,6 +13,6 @@
             ]
         }
     },
-    "isQueryValid": true,
-    "result":[]
+    "isQueryValid": false,
+    "result": "InsightError"
 }
