@@ -37,59 +37,62 @@ export default class InsightFacade implements IInsightFacade {
         kind: InsightDatasetKind,
     ): Promise<string[]> {
         // check id validity
-        if (id.includes("_") || !id.trim() || id === "") {
+        if (id.includes("_") || !id.trim() || id === "" || this.isAllWhitespace(id)) {
             return Promise.reject(new InsightError("invalid id"));
-        } else {
-            // check kinds validity
-            if (kind === InsightDatasetKind.Rooms) {
-                return Promise.reject(
-                    new InsightError("insightDataSetKind is Rooms"),
+        }
+        if (this.currentDatasets.includes(id)) {
+            return Promise.reject(new InsightError("cannot add a duplicate dataset ID"));
+        }
+        // check kinds validity
+        if (kind === InsightDatasetKind.Rooms) {
+            return Promise.reject(new InsightError("insightDataSetKind is Rooms"));
+        }
+        // alternative ensureFileSync
+        if (fs.existsSync(".data/" + id + ".zip")) {
+            return Promise.reject(new InsightError("file already added"));
+        }
+        let newDataset: Dataset;
+        newDataset = new Dataset(id, kind);
+        // unzip
+        let zip = new JSZip();
+        return zip
+            .loadAsync(content, {base64: true})
+            .then((res) => {
+                return Promise.all(this.getResult(res));
+            })
+            .then((jsonresults: any[]) => {
+                newDataset = this.extractJSON(
+                    jsonresults,
+                    newDataset,
                 );
-            } else {
-                // alternative ensureFileSync
-                if (fs.existsSync(".data/" + id + ".zip")) {
+                if (newDataset.getNumRows() === 0) {
                     return Promise.reject(
-                        new InsightError("file already added"),
+                        new InsightError(
+                            "Dataset contains 0 sections",
+                        ),
                     );
-                } else {
-                    let newDataset: Dataset;
-                    newDataset = new Dataset(id, kind);
-                    // unzip
-                    let zip = new JSZip();
-                    return zip
-                        .loadAsync(content, { base64: true })
-                        .then((res) => {
-                            return Promise.all(this.getResult(res));
-                        })
-                        .then((jsonresults: any[]) => {
-                            newDataset = this.extractJSON(
-                                jsonresults,
-                                newDataset,
-                            );
-                            if (newDataset.getNumRows() === 0) {
-                                return Promise.reject(
-                                    new InsightError(
-                                        "Dataset contains 0 sections",
-                                    ),
-                                );
-                            }
-                            // Log.trace(id);
-                            // Log.trace(jsonresults[1].result);
-                            this.datasetsMap.set(id, newDataset);
-                            fs.writeFileSync(
-                                "./data/" + id,
-                                JSON.stringify(jsonresults),
-                            );
-                            this.currentDatasets.push(id);
-                            return Promise.resolve(this.currentDatasets);
-                        })
-                        .catch((err: any) => {
-                            // Error unzipping
-                            return Promise.reject(new InsightError(err));
-                        });
                 }
+                // Log.trace(id);
+                // Log.trace(jsonresults[1].result);
+                this.datasetsMap.set(id, newDataset);
+                fs.writeFileSync("./data/" + id, JSON.stringify(jsonresults));
+                this.currentDatasets.push(id);
+                return Promise.resolve(this.currentDatasets);
+            })
+            .catch((err: any) => {
+                // Error unzipping
+                return Promise.reject(new InsightError(err));
+            });
+    }
+
+    public isAllWhitespace(str: string): boolean {
+        let strarr: string[] = str.split("");
+        for (const char in strarr) {
+            if (char !== " ") {
+                return false;
             }
         }
+        return true;
     }
 
     // confirm with TA
@@ -162,17 +165,17 @@ export default class InsightFacade implements IInsightFacade {
 
     // return promise of updated currentDatasets
     public removeDataset(id: string): Promise<string> {
-        if (id.includes("_") || !id.trim() || id === "") {
+        if (id.includes("_") || !id.trim() || id === "" || this.isAllWhitespace(id)) {
             return Promise.reject(new InsightError("invalid id"));
         }
         if (
             !this.currentDatasets.includes(id) ||
             this.currentDatasets.length === 0
         ) {
-            return Promise.reject(new NotFoundError("id is not found"));
+            return Promise.reject(new NotFoundError());
         }
         if (!this.datasetsMap.has(id) || this.datasetsMap.size === 0) {
-            return Promise.reject(new NotFoundError("id is not found"));
+            return Promise.reject(new NotFoundError());
         }
 
         // remove from data dir
