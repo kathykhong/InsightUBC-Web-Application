@@ -24,6 +24,8 @@ import { QueryProcessor } from "../queryModel/QueryProcessor";
 export default class InsightFacade implements IInsightFacade {
     public currentDatasets: string[] = [];
     public datasetsMap: Map<string, Dataset>;
+    public JSONFields: string[] = ["Avg", "Pass", "Fail", "Audit", "Year",
+        "Subject", "Course", "Professor", "Title", "id"];
 
     constructor() {
         Log.trace("InsightFacadeImpl::init()");
@@ -33,15 +35,19 @@ export default class InsightFacade implements IInsightFacade {
     // TODO: valid zip file check
     public addDataset(
         id: string,
-        content: string,
+        content: string, // check null and undefined
         kind: InsightDatasetKind,
     ): Promise<string[]> {
         // check id validity
-        if (id.includes("_") || !id.trim() || id === "" || this.isAllWhitespace(id)) {
+        if (id.includes("_") || !id.trim() || id === "" || this.isAllWhitespace(id)
+            || id === null || id === undefined) {
             return Promise.reject(new InsightError("invalid id"));
         }
         if (this.currentDatasets.includes(id)) {
             return Promise.reject(new InsightError("cannot add a duplicate dataset ID"));
+        }
+        if (content === null || content === undefined) {
+            return Promise.reject(new InsightError("content string cannot be null or undefined"));
         }
         // check kinds validity
         if (kind === InsightDatasetKind.Rooms) {
@@ -133,17 +139,30 @@ export default class InsightFacade implements IInsightFacade {
             // for each section object {} in the course (result:)
             for (const section of course.result) {
                 let newSection: Section = new Section();
-                this.setSectionFields(newSection, section);
-                if (courseKey === "") {
-                    courseKey = section.Subject + section.id;
+                if (this.containAllJSONFields(section)) {
+                    this.setSectionFields(newSection, section);
+                    if (courseKey === "") {
+                        courseKey = section.Subject + section.id;
+                    }
+                    newCourse.getSections().push(newSection);
+                    numRows++;
                 }
-                newCourse.getSections().push(newSection);
-                numRows++;
             }
             newDataset.getCourses().set(courseKey, newCourse);
         }
         newDataset.setNumRows(numRows);
         return newDataset;
+    }
+
+    // param section is a JSON string
+    public containAllJSONFields(section: any): boolean {
+        for (const fieldname of this.JSONFields) {
+            let currSectionKeys: string[] = Object.keys(section);
+            if (!currSectionKeys.includes(fieldname)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public setSectionFields(newSection: Section, section: any) {
@@ -165,7 +184,8 @@ export default class InsightFacade implements IInsightFacade {
 
     // return promise of updated currentDatasets
     public removeDataset(id: string): Promise<string> {
-        if (id.includes("_") || !id.trim() || id === "" || this.isAllWhitespace(id)) {
+        if (id.includes("_") || !id.trim() || id === "" || this.isAllWhitespace(id)
+            || id === null || id === undefined) {
             return Promise.reject(new InsightError("invalid id"));
         }
         if (
