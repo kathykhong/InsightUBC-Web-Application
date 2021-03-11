@@ -1,9 +1,11 @@
 import { Course } from "./Course";
+import { Building } from "./Building";
 import InsightFacade from "../controller/InsightFacade";
 import { InsightDatasetKind } from "../controller/IInsightFacade";
 
 export class Dataset {
     protected courses: Map<string, Course>;
+    protected buildings: Map<string, Building>;
     private numRows: number;
     private kind: InsightDatasetKind;
     private datasetId: string;
@@ -40,5 +42,8 @@ export class Dataset {
 
     public setDatasetID(id: string) {
         this.datasetId = id;
+    }
+    public getBuildings() {
+        return this.buildings;
     }
 }
