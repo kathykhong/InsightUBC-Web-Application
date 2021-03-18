@@ -1,6 +1,7 @@
 import { InsightError } from "../controller/IInsightFacade";
 import { OptionsValidator } from "./OptionsValidator";
 import { WhereValidator } from "./WhereValidator";
+import {TransformationsValidator} from "./TransformationsValidator";
 export class QueryValidator {
     public allFields: string[] = [
         "avg",
@@ -41,44 +42,45 @@ export class QueryValidator {
         ) {
             throw new InsightError("Query values cannot be null or undefined");
         }
-        // check if query has exactly 2 arguments
-        if (Object.keys(query).length !== 2) {
+        // check if query has at most 3 arguments
+        if (Object.keys(query).length > 3 || Object.keys(query).length < 2) {
             throw new InsightError(
                 "Query must contain WHERE and OPTIONS arguments",
             );
         }
         // check that query has only a WHERE and an OPTIONS
-        this.containsWHEREandOPTIONS(query);
+        this.containsWHEREandOPTIONSandTRANSFORMATIONS(query);
         let optionsValidator: OptionsValidator = new OptionsValidator();
         let whereValidator: WhereValidator = new WhereValidator();
         optionsValidator.validateOPTIONS(query, this);
         whereValidator.validateWHERE(query, this);
+        if (Object.keys(query).length === 3) {
+            TransformationsValidator.validateTRANSFORMATIONS(query);
+        }
     }
 
     // check if WHERE keys are all valid
     // Object.keys(query[operator])[0]
-    public containsWHEREandOPTIONS(query: any): void {
+    public containsWHEREandOPTIONSandTRANSFORMATIONS(query: any): void {
         if (!Object.keys(query).includes("WHERE")) {
             throw new InsightError("Query must contain a WHERE clause");
         }
         if (!Object.keys(query).includes("OPTIONS")) {
             throw new InsightError("Query must contain a OPTIONS clause");
         }
-        // major issue here : logic is not correct debugger goes straight to error
-        /* if ((Object.keys(query)[0] !== "WHERE") || (Object.keys(query)[0] !== "OPTIONS")) {
-            throw new InsightError("Keys must be WHERE or OPTIONS only");
+        if (Object.keys(query).length === 3) {
+            if (!Object.keys(query).includes("TRANSFORMATIONS")) {
+                throw new InsightError("Query may only additionally contain TRANSFORMATIONS");
+            }
         }
-        if ((Object.keys(query)[1] !== "WHERE") || (Object.keys(query)[1] !== "OPTIONS")) {
-            throw new InsightError("Keys must be WHERE or OPTIONS only");
-        }*/
-        if (
-            (Object.keys(query)[0] === "WHERE"
-                && Object.keys(query)[1] !== "OPTIONS")
-            || (Object.keys(query)[0] === "OPTIONS"
-            && Object.keys(query)[1] !== "WHERE")
-        ) {
-            throw new InsightError("Keys must be WHERE or OPTIONS only");
-        }
+        // if (
+        //     (Object.keys(query)[0] === "WHERE"
+        //         && Object.keys(query)[1] !== "OPTIONS")
+        //     || (Object.keys(query)[0] === "OPTIONS"
+        //     && Object.keys(query)[1] !== "WHERE")
+        // ) {
+        //     throw new InsightError("Keys must be WHERE or OPTIONS or TRANSFORMATIONS only");
+        // }
     }
 
     // todo: validate that all dataset ids match and are valid

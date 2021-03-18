@@ -26,7 +26,7 @@ export class WhereValidator {
         }*/
         // check if WHERE clause exists but is empty
         if (Object.keys(query.WHERE).length === 0) {
-            throw new InsightError("Where cannot be empty");
+            throw new InsightError("WHERE cannot be empty");
         }
         // check if WHERE contains zero or one Filter
         if (Object.keys(query.WHERE).length > 1) {
