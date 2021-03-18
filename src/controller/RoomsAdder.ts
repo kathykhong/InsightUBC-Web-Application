@@ -93,7 +93,6 @@ export class RoomsAdder {
             Log.trace("hi");
         }
     }
-
     public modifyBuildingPath(pathName: string) {
         pathName = pathName.substring(1);
         pathName = "rooms" + pathName;
@@ -115,7 +114,6 @@ export class RoomsAdder {
         let code = pathSplitArr[pathSplitArr.length - 1];
         return code;
     }
-
     public findBuildingPaths(tBodyElement: any) {
         if (tBodyElement.nodeName === "a" && tBodyElement.attrs.length > 0
             && tBodyElement.attrs[0].name === "href") {
@@ -145,7 +143,6 @@ export class RoomsAdder {
                 }
         }
     }
-
     public findTables(element: any): any {
         if (element.nodeName === "table" && element.childNodes.length > 0 &&
             element.childNodes[1].nodeName === "thead") {

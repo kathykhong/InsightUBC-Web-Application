@@ -43,7 +43,6 @@ export class Dataset {
     public setDatasetID(id: string) {
         this.datasetId = id;
     }
-
     public getBuildings() {
         return this.buildings;
     }
