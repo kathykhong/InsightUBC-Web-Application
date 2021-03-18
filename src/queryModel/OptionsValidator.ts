@@ -32,16 +32,37 @@ export class OptionsValidator {
         // check validity of COLUMNS and ORDER
         if (Object.keys(query.OPTIONS).length === 1) {
             // check that OPTIONS contains COLUMNS
-            if (Object.keys(query.OPTIONS)[0] !== "COLUMNS") {
+            if (!Object.keys(query.OPTIONS).includes("COLUMNS")) {
                 throw new InsightError("OPTIONS must contain COLUMNS");
             } else {
                 this.validateCOLUMNS(query, queryValidator);
             }
         } else if (Object.keys(query.OPTIONS).length === 2) {
-            this.containsCOLUMNSandORDER(query);
+            // this.containsCOLUMNSandORDER(query);
+            this.containsCOLUMNSandSORT(query);
             // must call validateCOLUMNS before validateORDER for global var to be set
             this.validateCOLUMNS(query, queryValidator);
-            this.validateORDER(query, queryValidator);
+            this.validateSORT(query, queryValidator);
+            // this.validateORDER(query, queryValidator);
+        }
+    }
+
+    private containsCOLUMNSandSORT(query: any) {
+        if (Object.keys(query.OPTIONS).length > 2) {
+            throw new InsightError("OPTIONS can contain maximum 2 keys");
+        }
+        if (Object.keys(query.OPTIONS).length === 0) {
+            throw new InsightError("OPTIONS must contain at least 1 key");
+        }
+        if (Object.keys(query.OPTIONS).length === 1) {
+            if (!Object.keys(query.OPTIONS).includes("COLUMNS")) {
+                throw new InsightError("If OPTIONS has one key it must be COLUMNS");
+            }
+        }
+        if (Object.keys(query.OPTIONS).length === 2) {
+            if ((!Object.keys(query.OPTIONS).includes("COLUMNS")) || (!Object.keys(query.OPTIONS).includes("SORT"))) {
+                throw new InsightError("If OPTIONS has two keys it must include COLUMNS and SORT");
+            }
         }
     }
 
@@ -118,29 +139,66 @@ export class OptionsValidator {
         queryValidator.columnIDString = prevID;
     }
 
+    public validateSORT(query: any, queryValidator: QueryValidator): void {
+        if (Object.keys(query.OPTIONS.SORT).includes(null) || Object.keys(query.OPTIONS.SORT).includes(undefined)) {
+            throw new InsightError("SORT cannot contain NULL or undefined values");
+        }
+        if (Object.keys(query.OPTIONS.SORT).length === 0) {
+            throw new InsightError("SORT cannot have an empty value");
+        }
+        if (Object.keys(query.OPTIONS.SORT).length > 1) {
+            throw new InsightError("SORT can only have one value, ORDER");
+        }
+        if (!Object.keys(query.OPTIONS.SORT).includes("ORDER")) {
+            throw new InsightError("SORT must contain ORDER");
+        }
+        this.validateORDER(query.OPTIONS.SORT, queryValidator);
+        // order can contain anykey, or dir and keys
+    }
+
     public validateORDER(query: any, queryValidator: QueryValidator): void {
+        // when OPTIONS contains ORDER, check that OPTIONS only has one ORDER
+        if (!Object.keys(query.OPTIONS.SORT).includes("ORDER")) {
+            throw new InsightError("SORT must contain one ORDER");
+        }
+        if (Object.keys(query.OPTIONS.SORT.ORDER).length === 0) {
+            throw new InsightError("ORDER cannot be empty, must have at least one key");
+        }
         // if OPTIONS contains a second OPTION, check that it is ORDER
         // Check if OPTIONS contains ORDER (optional clause)
         // maybe take the following out (in case we can't guarantee the checking at the caller level)
-        if (Object.keys(query.OPTIONS).length < 2) {
-            throw new InsightError("COLUMNS can only contain one clause");
+        if (Object.keys(query.OPTIONS.SORT.ORDER).length > 2) {
+            throw new InsightError("ORDER can contain either one key or two keys");
         }
-        // when OPTIONS contains ORDER, check that OPTIONS only has one ORDER
-        if (!Object.keys(query.OPTIONS).includes("ORDER")) {
-            throw new InsightError("OPTIONS must contain one or no ORDER");
+        if (Object.keys(query.OPTIONS.SORT.ORDER).length === 1) {
+            this.validateANYKEY(query, queryValidator);
         }
-        if (!Object.keys(query.OPTIONS).includes("COLUMNS")) {
-            throw new InsightError("OPTIONS must contain one COLUMNS");
+        if (Object.keys(query.OPTIONS.SORT.ORDER).length === 2) {
+            if (!Object.keys(query.OPTIONS.SORT.ORDER).includes("dir")) {
+                throw new InsightError("If ORDER has 2 keys one of them must be dir");
+            } else {
+                this.validateDir(query, queryValidator);
+            }
+            if (!Object.keys(query.OPTIONS.SORT.ORDER).includes("keys")) {
+                throw new InsightError("if ORDER has 2 keys one of them must be keys");
+            } else {
+                this.validateKeys(query, queryValidator);
+            }
         }
+        // todo: the following if statement might actually belong to checking OPTIONS
+        // if (!Object.keys(query.OPTIONS).includes("COLUMNS")) {
+        //     throw new InsightError("OPTIONS must contain one COLUMNS");
+        // }
         // when OPTIONS contains ORDER, check that OPTIONS only has one ORDER
         // todo: maybe redundant if caller is also checking but who'sssss responsibility?????
         // if (!this.containsCOLUMNSandORDER(query)) {
         //     return Promise.reject(new InsightError("OPTIONS must have one or no ORDER"));
         // }
+        // todo: mar 14, this might be causing actually a lot of errors for c1 lol??
         // check if ORDER has one value only
-        if (typeof query.OPTIONS.ORDER !== "string") {
-            throw new InsightError("ORDER can only contain one string value");
-        }
+        // if (typeof query.OPTIONS.ORDER !== "string") {
+        //     throw new InsightError("ORDER can only contain one string value");
+        // }
         // check if ORDER's (singular) key is valid skey or mkey
         let currIDKeyArr = queryValidator.splitIDKey(query.OPTIONS.ORDER);
         let currID: string = currIDKeyArr[0];
@@ -159,6 +217,45 @@ export class OptionsValidator {
             throw new InsightError(
                 "ORDER key must be included in COLUMNS keys ",
             );
+        }
+    }
+
+
+    /* checks that ANYKEY::= key | applykey */
+    private validateANYKEY(query: any, queryValidator: QueryValidator) {
+        // check if anykey is empty, null, undefined
+        if (Object.values(query).includes(null) ||
+        Object.values(query).includes(undefined)) {
+            throw new InsightError("ANYKEY values cannot contain null or undefined values");
+        }
+        // check if anykey contains 1 value
+        if (Object.values(query).length !== 1) {
+            throw new InsightError("ANYKEY must only contain 1 value");
+        }
+        // check that the 1 value is a valid key or applykey
+        // todo: how to access query.ANYKEY? multiple places
+    }
+
+    // todo: double check that Obj.values is what should be used here
+    private validateDir(query: any, queryValidator: QueryValidator) {
+        const pathToORDERdir = query.OPTIONS.SORT.ORDER.dir;
+        if (Object.values(pathToORDERdir).length !== 1) {
+            throw new InsightError("ORDER dir must contain only one key");
+        }
+        if (Object.values(pathToORDERdir).includes(null) ||
+        Object.values(pathToORDERdir).includes(undefined)) {
+            throw new InsightError("ORDER dir cannot contain null or undefined values");
+        }
+        if (Object.values(pathToORDERdir)[0] !== "UP" ||
+            Object.values(pathToORDERdir)[0] !== "DOWN") {
+            throw new InsightError("ORDER dir can only contain strings UP or DOWN");
+        }
+    }
+
+    private validateKeys(query: any, queryValidator: QueryValidator) {
+        if (Object.values(query.OPTIONS.SORT.ORDER.keys).includes(null) ||
+        Object.values(query.OPTIONS.SORT.ORDER.keys).includes(undefined)) {
+            throw new InsightError("ORDER keys cannot contain null or undefined values");
         }
     }
 }

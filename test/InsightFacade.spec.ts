@@ -1,16 +1,13 @@
 import * as chai from "chai";
-import { expect } from "chai";
+import {expect} from "chai";
 import * as fs from "fs-extra";
 import * as chaiAsPromised from "chai-as-promised";
-import {
-    InsightDataset,
-    InsightDatasetKind,
-    InsightError,
-} from "../src/controller/IInsightFacade";
+import {InsightDataset, InsightDatasetKind, InsightError, } from "../src/controller/IInsightFacade";
 import InsightFacade from "../src/controller/InsightFacade";
 import Log from "../src/Util";
 import TestUtil from "./TestUtil";
-import { NotFoundError } from "restify";
+import {NotFoundError} from "restify";
+import {RoomsAdder} from "../src/controller/RoomsAdder";
 
 // This extends chai with assertions that natively support Promises
 chai.use(chaiAsPromised);
@@ -45,6 +42,7 @@ describe("InsightFacade Add/Remove/List Dataset", function () {
         emptyDataset: "./test/data/emptydataset.zip",
         zoolOnly36results: "./test/data/zoolOnly36results.zip",
         nestOnly82results: "./test/data/nestOnly82results.zip",
+        rooms: "./test/data/rooms.zip"
     };
     let datasets: { [id: string]: string } = {};
     let insightFacade: InsightFacade;
@@ -88,6 +86,21 @@ describe("InsightFacade Add/Remove/List Dataset", function () {
         } catch (err) {
             Log.error(err);
         }
+    });
+
+    it (" Should retrieve a geolocation", function () {
+        let address: string = "1984 Mathematics Road";
+        const geoProm = new RoomsAdder().retrieveGeoLocation(address);
+        return expect(geoProm).to.eventually.deep.equal({lat: 49.266463, lon: -123.255534});
+    });
+
+    it ("Should add a dataset with kind = Rooms", function () {
+        const id: string = "rooms";
+        const expected: string[] = [id];
+        const futureResult: Promise<string[]> = insightFacade.addDataset(id, datasets[id], InsightDatasetKind.Rooms
+    );
+        return expect(futureResult).to.eventually.deep.equal(expected);
+
     });
 
     // making a new branch test***
@@ -279,7 +292,8 @@ describe("InsightFacade Add/Remove/List Dataset", function () {
         });
     */
 
-    it("Should not add a dataset with kind = rooms", function () {
+    // took this out for c2
+   /* it("Should not add a dataset with kind = rooms", function () {
         const id: string = "courses";
         const expected: string[] = [];
         const futureResult: Promise<string[]> = insightFacade.addDataset(
@@ -288,7 +302,7 @@ describe("InsightFacade Add/Remove/List Dataset", function () {
             InsightDatasetKind.Rooms,
         );
         return expect(futureResult).to.eventually.be.rejectedWith(InsightError);
-    });
+    });*/
 
     it("Should add a dataset with kind = courses", function () {
         const id: string = "courses";
