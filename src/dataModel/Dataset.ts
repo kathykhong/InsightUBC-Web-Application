@@ -5,7 +5,7 @@ import { InsightDatasetKind } from "../controller/IInsightFacade";
 
 export class Dataset {
     protected courses: Map<string, Course>;
-    protected buildings: Map<string, Building>;
+    protected buildings: Building[];
     private numRows: number;
     private kind: InsightDatasetKind;
     private datasetId: string;
@@ -14,6 +14,7 @@ export class Dataset {
         this.datasetId = dataSetId;
         this.kind = kind;
         this.courses = new Map();
+        this.buildings = [];
     }
 
     public getCourses(): Map<string, Course> {

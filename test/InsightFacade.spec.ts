@@ -7,6 +7,7 @@ import InsightFacade from "../src/controller/InsightFacade";
 import Log from "../src/Util";
 import TestUtil from "./TestUtil";
 import {NotFoundError} from "restify";
+import {RoomsAdder} from "../src/controller/RoomsAdder";
 
 // This extends chai with assertions that natively support Promises
 chai.use(chaiAsPromised);
@@ -85,6 +86,12 @@ describe("InsightFacade Add/Remove/List Dataset", function () {
         } catch (err) {
             Log.error(err);
         }
+    });
+
+    it (" Should retrieve a geolocation", function () {
+        let address: string = "1984 Mathematics Road";
+        const geoProm = new RoomsAdder().retrieveGeoLocation(address);
+        return expect(geoProm).to.eventually.deep.equal({lat: 49.266463, lon: -123.255534});
     });
 
     it ("Should add a dataset with kind = Rooms", function () {
