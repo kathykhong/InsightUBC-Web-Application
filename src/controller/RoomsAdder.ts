@@ -48,7 +48,6 @@ export class RoomsAdder {
                     insightFacade.datasetsMap.set(id, data);
                     let datasetInJSONform = JSON.stringify(data);
                     fs.writeFileSync("./data/" + id, datasetInJSONform);
-                    Log.trace("JSON");
                     insightFacade.currentDatasets.push(id);
                     return Promise.resolve(insightFacade.currentDatasets);
             })
