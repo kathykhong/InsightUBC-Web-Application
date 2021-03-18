@@ -75,14 +75,17 @@ export class RoomsAdder {
         return this.getBuildingsHTMLresult(zipObj)
             .then((htmlStringArr: string[]) => {
                 Log.trace("hi");
-                return this.parseBuildingsHTML(htmlStringArr); })
+                return this.parseBuildingsHTML(htmlStringArr);
+            })
             .then((parsedBuildings: any[]) => {
                 this.parsedBuildings = parsedBuildings;
-                return this.extractAllGeoLocation(parsedBuildings); })
+                return this.extractAllGeoLocation(parsedBuildings);
+            })
             .then((geoLocDict: any[]) => {
                 Log.trace("geo");
-                return this.extractBuildingsDetails(this.parsedBuildings,
-                    dataset, geoLocDict, this.geoBuildingNames); })
+                return this.extractBuildingsDetails
+                (this.parsedBuildings, dataset, geoLocDict, this.geoBuildingNames);
+            })
             .then((data: Dataset) => {
                 return Promise.resolve(data);
             });
