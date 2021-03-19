@@ -1,10 +1,8 @@
 import {RoomsAdder} from "./RoomsAdder";
-import Log from "../Util";
 
 export class RoomsHelper {
     public static findTables(element: any, roomsAdder: RoomsAdder): any {
-        if (element.nodeName === "table" && element.childNodes.length > 0 &&
-            element.childNodes[1].nodeName === "thead") {
+        if (element.nodeName === "table") {
             roomsAdder.buildingTableList.push(element);
         }
         if (element.childNodes && element.childNodes.length > 0) {
@@ -14,17 +12,17 @@ export class RoomsHelper {
         }
     }
 
-    public static findValidBuildingsTable(listOfTables: any) {
+    public static findValidBuildingsTable(listOfTables: any, roomsAdder: RoomsAdder) {
         for (let table of listOfTables) {
-            let tableHeader = table.childNodes[1];
-            if (tableHeader.childNodes[1].nodeName === "tr") {
-                let headerRows = tableHeader.childNodes[1];
-
-                if (headerRows.childNodes[1].nodeName === "th") {
-                    let tableHeading = headerRows.childNodes[1];
-                    if (tableHeading.attrs.length > 0
-                        && tableHeading.attrs[0].value === "views-field views-field-field-building-image") {
-                        return table;
+            let tableHeader = this.findTableHeader(table);
+            this.findBuildingTableHeaderThs(tableHeader, roomsAdder);
+            let listThs: any[] = roomsAdder.dirtyBuildingTableHeaderThs;
+            for (let th of listThs) {
+                if (th.attrs && th.attrs.length > 0) {
+                    for (let attr of th.attrs) {
+                        if (attr.name === "class" && attr.value === "views-field views-field-field-building-image") {
+                            return table;
+                        }
                     }
                 }
             }
@@ -60,60 +58,76 @@ export class RoomsHelper {
         return pathName;
     }
 
-    public static findRoomsTables(parsedBuilding: any, roomsAdder: RoomsAdder) {
-        if (parsedBuilding.nodeName === "table" && parsedBuilding.childNodes.length > 0 &&
-            parsedBuilding.childNodes[1].nodeName === "thead") {
-            roomsAdder.dirtyRoomsTables.push(parsedBuilding);
-        }
-        if (parsedBuilding.childNodes && parsedBuilding.childNodes.length > 0) {
-            for (let child of parsedBuilding.childNodes) {
-                this.findRoomsTables(child, roomsAdder);
-            }
-        }
-    }
-
-    public static findValidRoomsTable(tables: any[]) {
+    public static findValidRoomsTable(tables: any[], roomsAdder: RoomsAdder) {
         for (let table of tables) {
-            let tableHeader = table.childNodes[1];
-            if (tableHeader.childNodes[1].nodeName === "tr") {
-                let headerRows = tableHeader.childNodes[1];
-
-                if (headerRows.childNodes[1].nodeName === "th") {
-                    let tableHeading = headerRows.childNodes[1];
-                    if (tableHeading.attrs.length > 0
-                        && tableHeading.attrs[0].value === "views-field views-field-field-room-number") {
-                        return table;
+            let tableHeader = this.findTableHeader(table);
+            this.findRoomsTableHeaderThs(tableHeader, roomsAdder);
+            let listThs: any[] = roomsAdder.dirtyRoomsTableHeaderThs;
+            for (let th of listThs) {
+                if (th.attrs && th.attrs.length > 0) {
+                    for (let attr of th.attrs) {
+                        if (attr.name === "class" && attr.value === "views-field views-field-field-room-number") {
+                            return table;
+                        }
                     }
                 }
             }
         }
     }
 
-    public static convertAddressToURL(address: string) {
-        let baseURL: string = "http://cs310.students.cs.ubc.ca:11316/api/v1/project_team231/";
-        let encodedAddress: string = encodeURI(address);
-        let fullURL: string = baseURL + encodedAddress;
-        return fullURL;
+    public static findRoomsTableHeaderThs(theadElt: any, roomsAdder: RoomsAdder) {
+        if (theadElt.nodeName === "th") {
+            roomsAdder.dirtyRoomsTableHeaderThs.push(theadElt);
+        }
+
+        if (theadElt.childNodes && theadElt.childNodes.length > 0) {
+            for (let child of theadElt.childNodes) {
+                this.findRoomsTableHeaderThs(child, roomsAdder);
+            }
+        }
     }
 
-    public static findBuildingBody(parsedBuildingElt: any): any {
-        if (parsedBuildingElt.nodeName === "body"
-            && parsedBuildingElt.childNodes !== undefined && parsedBuildingElt.childNodes.length > 0
-            && parsedBuildingElt.childNodes[1].nodeName === "noscript") {
-            return parsedBuildingElt;
+    public static findBuildingTableHeaderThs(theadElt: any, roomsAdder: RoomsAdder) {
+        if (theadElt.nodeName === "th") {
+            roomsAdder.dirtyBuildingTableHeaderThs.push(theadElt);
         }
-        if (parsedBuildingElt.childNodes && parsedBuildingElt.childNodes.length > 0) {
-            for (let child of parsedBuildingElt.childNodes) {
-                let body: any = this.findBuildingBody(child);
-                if (!(body === undefined)) {
-                    return body;
+
+        if (theadElt.childNodes && theadElt.childNodes.length > 0) {
+            for (let child of theadElt.childNodes) {
+                this.findBuildingTableHeaderThs(child, roomsAdder);
+            }
+        }
+    }
+
+    public static findTableHeader(tableElt: any) {
+        if (tableElt.nodeName === "thead") {
+            return tableElt;
+        }
+
+        if (tableElt.childNodes && tableElt.childNodes.length > 0) {
+            for (let child of tableElt.childNodes) {
+                let thead: any = this.findTableHeader(child);
+                if (!(thead === undefined)) {
+                    return thead;
                 }
             }
         }
     }
 
+    public static findRoomRowTds(roomsTBodyElt: any, roomsAdder: RoomsAdder) {
+        if (roomsTBodyElt.nodeName === "td" && roomsTBodyElt.childNodes.length > 0) {
+            roomsAdder.dirtyRoomsTds.push(roomsTBodyElt);
+        }
+
+        if (roomsTBodyElt.childNodes && roomsTBodyElt.childNodes.length > 0) {
+            for (let child of roomsTBodyElt.childNodes) {
+                this.findRoomRowTds(child, roomsAdder);
+            }
+        }
+
+    }
+
     public static findRoomsRows(roomsTBodyElt: any, roomsAdder: RoomsAdder) {
-        let roomsRow: any[] = [];
         if (roomsTBodyElt.nodeName === "tr" && roomsTBodyElt.childNodes.length > 0) {
             roomsAdder.dirtyRoomsRows.push(roomsTBodyElt);
         }
@@ -122,7 +136,6 @@ export class RoomsHelper {
                 this.findRoomsRows(child, roomsAdder);
             }
         }
-        return roomsRow;
     }
 
     public static findRoomsTableBody(roomsTBodyElt: any): any {
@@ -140,13 +153,17 @@ export class RoomsHelper {
         }
     }
 
-    public static findBuildingInfo(buildingBodyElt: any) {
-        if (buildingBodyElt.nodeName === "div" && buildingBodyElt.attrs !== undefined
-            && buildingBodyElt.attrs[0].value === "building-info") {
-            return buildingBodyElt;
+    public static findBuildingInfo(parsedBuildingElt: any) {
+        if (parsedBuildingElt.nodeName === "div" && parsedBuildingElt.attrs) {
+            for (let attr of parsedBuildingElt.attrs) {
+                if (attr.name === "id" && attr.value === "building-info") {
+                    return parsedBuildingElt;
+                }
+            }
         }
-        if (buildingBodyElt.childNodes && buildingBodyElt.childNodes.length > 0) {
-            for (let child of buildingBodyElt.childNodes) {
+
+        if (parsedBuildingElt.childNodes && parsedBuildingElt.childNodes.length > 0) {
+            for (let child of parsedBuildingElt.childNodes) {
                 let buildingInfo: any = this.findBuildingInfo(child);
                 if (!(buildingInfo === undefined)) {
                     return buildingInfo;
@@ -155,10 +172,10 @@ export class RoomsHelper {
         }
     }
 
-    public static retrieveAddress(parsedBodyElt: any): string {
-        if (parsedBodyElt.childNodes[3].nodeName === "div"
-            && parsedBodyElt.childNodes[3].attrs[0].value === "building-field") {
-            let firstDivElt = parsedBodyElt.childNodes[3];
+    public static retrieveAddress(buildingInfo: any): string {
+        if (buildingInfo.childNodes[3].nodeName === "div"
+            && buildingInfo.childNodes[3].attrs[0].value === "building-field") {
+            let firstDivElt = buildingInfo.childNodes[3];
             if (firstDivElt.childNodes[0].nodeName === "div"
                 && firstDivElt.childNodes[0].attrs[0].value === "field-content") {
                 let innerDivFieldContent = firstDivElt.childNodes[0];
@@ -177,13 +194,9 @@ export class RoomsHelper {
     }
 
     public static findBuildingAddress(parsedBuilding: any) {
-        let buildingBody: any = RoomsHelper.findBuildingBody(parsedBuilding);
-        Log.trace("hi");
-        let buildingInfo: any = RoomsHelper.findBuildingInfo(buildingBody);
-        Log.trace("hi");
+        let buildingInfo: any = RoomsHelper.findBuildingInfo(parsedBuilding);
         let address: string = RoomsHelper.retrieveAddress(buildingInfo);
         return address;
-
     }
 
     public static retrieveBuildingName(buildingInfoElt: any) {
@@ -199,61 +212,80 @@ export class RoomsHelper {
         }
     }
 
-    public static findRoomLink(rowElt: any) {
-        if (rowElt.childNodes[1].nodeName === "td" && rowElt.childNodes[1].attrs.length > 0
-            && rowElt.childNodes[1].attrs[0].value === "views-field views-field-field-room-number") {
-            let linkTDContent: any = rowElt.childNodes[1];
-
-            if (linkTDContent.childNodes[1].nodeName === "a" && linkTDContent.childNodes[1].attrs.length > 0
-                && linkTDContent.childNodes[1].attrs[0].name === "href") {
-                let roomLink: string = linkTDContent.childNodes[1].attrs[0].value;
-                return roomLink;
+    public static findRoomLink(rowtdArr: any[]) {
+        for (let td of rowtdArr) {
+            if (td.attrs.length > 0 && td.childNodes) {
+                for (let tdAttrs of td.attrs) {
+                    if (tdAttrs.name === "class" && tdAttrs.value === "views-field views-field-field-room-number") {
+                        for (let child of td.childNodes) {
+                            if (child.nodeName === "a" && child.attrs && child.attrs.length > 0) {
+                                for (let attr of child.attrs) {
+                                    if (attr.name === "href") {
+                                        let roomLink: string = child.attrs[0].value;
+                                        return roomLink;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    public static findRoomsSeats(rowElt: any): number {
-        if (rowElt.childNodes[3].nodeName === "td" && rowElt.childNodes[3].attrs.length > 0
-            && rowElt.childNodes[3].attrs[0].value === "views-field views-field-field-room-capacity") {
-            let seatTDContent: any = rowElt.childNodes[3];
-            if (seatTDContent.childNodes[0].nodeName === "#text") {
-                let seatNumberStr: string = seatTDContent.childNodes[0].value;
-                seatNumberStr = seatNumberStr.trim();
-                let seatNumber: number = Number(seatNumberStr);
-                return seatNumber;
+    public static findRoomsSeats(rowtdArr: any): number {
+        for (let td of rowtdArr) {
+            if (td.attrs.length > 0 && td.childNodes) {
+                for (let attr of td.attrs) {
+                    if (attr.name === "class" && attr.value === "views-field views-field-field-room-capacity") {
+                        for (let child of td.childNodes) {
+                            if (child.nodeName === "#text") {
+                                let roomCapacity: number = child.value;
+                                return roomCapacity;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    public static findRoomsType(rowElt: any) {
-        if (rowElt.childNodes[7].nodeName === "td" && rowElt.childNodes[7].attrs.length > 0
-            && rowElt.childNodes[7].attrs[0].value === "views-field views-field-field-room-type") {
-            let roomsTypeTDContent: any = rowElt.childNodes[7];
-            if (roomsTypeTDContent.childNodes[0].nodeName === "#text") {
-                let roomsType: string = roomsTypeTDContent.childNodes[0].value;
-                roomsType = roomsType.trim();
-                return roomsType;
+    public static findRoomsType(rowtdArr: any) {
+        for (let td of rowtdArr) {
+            if (td.attrs.length > 0 && td.childNodes) {
+                for (let attr of td.attrs) {
+                    if (attr.name === "class" && attr.value === "views-field views-field-field-room-type") {
+                        for (let child of td.childNodes) {
+                            if (child.nodeName === "#text") {
+                                let type: string = child.value;
+                                return type;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
-    public static findRoomsFurnitureType(rowElt: any): string {
-        if (rowElt.childNodes[5].nodeName === "td" && rowElt.childNodes[5].attrs.length > 0
-            && rowElt.childNodes[5].attrs[0].value === "views-field views-field-field-room-furniture") {
-            let furnitureTypeTDContent: any = rowElt.childNodes[5];
-            if (furnitureTypeTDContent.childNodes[0].nodeName === "#text") {
-                let furnitureType: string = furnitureTypeTDContent.childNodes[0].value;
-                furnitureType = furnitureType.trim();
-                return furnitureType;
+    public static findRoomsFurnitureType(rowtdArr: any): string {
+        for (let td of rowtdArr) {
+            if (td.attrs.length > 0 && td.childNodes) {
+                for (let attr of td.attrs) {
+                    if (attr.name === "class" && attr.value === "views-field views-field-field-room-furniture") {
+                        for (let child of td.childNodes) {
+                            if (child.nodeName === "#text") {
+                                let furnitureType: string = child.value;
+                                return furnitureType;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     public static findBuildingName(parsedBuilding: any) {
-        let buildingBody: any = RoomsHelper.findBuildingBody(parsedBuilding);
-        Log.trace("hi");
-        let buildingInfo: any = RoomsHelper.findBuildingInfo(buildingBody);
-        Log.trace("hi");
+        let buildingInfo: any = RoomsHelper.findBuildingInfo(parsedBuilding);
         let name: string = RoomsHelper.retrieveBuildingName(buildingInfo);
         return name;
     }

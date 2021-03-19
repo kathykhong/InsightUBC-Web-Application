@@ -15,7 +15,9 @@ import {RoomsHelper} from "./RoomsHelper";
 const parse5 = require("parse5");
 
 export class RoomsAdder {
-
+    public dirtyBuildingTableHeaderThs: any[] = [];
+    public dirtyRoomsTableHeaderThs: any [] = [];
+    public dirtyRoomsTds: any[] = [];
     public dirtyRoomsRows: any[] = [];
     public dirtyRoomsTables: any[] = [];
     public buildingTableList: any[] = [];
@@ -24,6 +26,7 @@ export class RoomsAdder {
     public zip: JSZip;
     public parsedBuildings: any[];
     public geoBuildingNames: string[] = [];
+    public roomsNumRows: number = 0;
 
     public addDatasetRooms(
         id: string,
@@ -115,11 +118,11 @@ export class RoomsAdder {
              if (buildingNamesWGeo.includes(buildingName)) {
                  Log.trace("hi");
                  this.dirtyRoomsTables = [];
-                 RoomsHelper.findRoomsTables(parsedBuilding, this);
+                 RoomsHelper.findTables(parsedBuilding, this);
                  let tables = this.dirtyRoomsTables;
                  if (tables.length > 0) {
                      let building: Building = new Building();
-                     let validRoomsTable = RoomsHelper.findValidRoomsTable(tables);
+                     let validRoomsTable = RoomsHelper.findValidRoomsTable(tables, this);
                      building = this.setAllRoomsContent(validRoomsTable, building,
                          buildingAddress, buildingName, geoLocDict, buildingNamesWGeo);
                      datasetloc.getBuildings().push(building);
@@ -127,12 +130,13 @@ export class RoomsAdder {
                  }
              }
          }
+        datasetloc.setNumRows(this.roomsNumRows);
         Log.trace("returning here");
         return Promise.resolve(datasetloc);
     }
 
     public retrieveGeoLocation(address: string): Promise<any> {
-        let url: string = RoomsHelper.convertAddressToURL(address);
+        let url: string = this.convertAddressToURL(address);
         const promise = new Promise((resolve, reject) => {
             http.get(url, (data: any) => {
                 data.setEncoding("utf8");
@@ -165,17 +169,18 @@ export class RoomsAdder {
         RoomsHelper.findRoomsRows(tbody, this);
         let roomsRows: any = this.dirtyRoomsRows;
         for (let row of roomsRows) {
+            RoomsHelper.findRoomRowTds(row, this);
             let room: Room = new Room();
-            let link: string = RoomsHelper.findRoomLink(row);
+            let link: string = RoomsHelper.findRoomLink(this.dirtyRoomsTds);
             let roomNameNumber: string = RoomsHelper.extractRoomsNameOrNumber(link);
             let roomNameNumberArr: string[] = roomNameNumber.split("-");
             let roomName: string = roomNameNumberArr[0];
             let roomNumber: string = roomNameNumberArr[1];
             roomNameNumber = roomName + "_" + roomNumber;
-            let roomSeats: number = RoomsHelper.findRoomsSeats(row);
-            let roomFurnitureType: string = RoomsHelper.findRoomsFurnitureType(row);
+            let roomSeats: number = RoomsHelper.findRoomsSeats(this.dirtyRoomsTds);
+            let roomFurnitureType: string = RoomsHelper.findRoomsFurnitureType(this.dirtyRoomsTds);
             // Log.trace(roomFurnitureType);
-            let roomType: string = RoomsHelper.findRoomsType(row);
+            let roomType: string = RoomsHelper.findRoomsType(this.dirtyRoomsTds);
             room.setAddress(buildingAddress);
             room.setFullname(buildingName);
             this.setGeoLocation(room, buildingName, geoLocDict, buildingNamesWGeo);
@@ -187,6 +192,7 @@ export class RoomsAdder {
             room.setType(roomType);
             room.setLink(link);
             building.listOfRooms.push(room);
+            this.roomsNumRows++;
         }
         return building;
     }
@@ -227,7 +233,7 @@ export class RoomsAdder {
     public extractBuildingPaths(element: any) {
         RoomsHelper.findTables(element, this);
         let listOfTables: any[] = this.buildingTableList;
-        let validTable: any = RoomsHelper.findValidBuildingsTable(listOfTables);
+        let validTable: any = RoomsHelper.findValidBuildingsTable(listOfTables, this);
         RoomsHelper.findBuildingPaths(validTable, this);
         let buildingPathList: string[] = RoomsHelper.removeRepeatedData(this.listBuildingPaths);
 
@@ -237,5 +243,12 @@ export class RoomsAdder {
             this.buildingPathMap.set(buildingCode, buildingPath);
             Log.trace("hi");
         }
+    }
+
+    public convertAddressToURL(address: string) {
+        let baseURL: string = "http://cs310.students.cs.ubc.ca:11316/api/v1/project_team231/";
+        let encodedAddress: string = encodeURI(address);
+        let fullURL: string = baseURL + encodedAddress;
+        return fullURL;
     }
 }
