@@ -209,6 +209,7 @@ export default class InsightFacade implements IInsightFacade {
                     numRows: this.datasetsMap.get(dsid).getNumRows(),
                 };
             }
+            result.push(currDS);
         }
         return Promise.resolve(result);
     }
