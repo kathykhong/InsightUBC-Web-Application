@@ -205,7 +205,7 @@ export default class InsightFacade implements IInsightFacade {
             if (this.datasetsMap.get(dsid).getKind() === InsightDatasetKind.Rooms) {
                 currDS = {
                     id: this.datasetsMap.get(dsid).getDatasetID(),
-                    kind: InsightDatasetKind.Courses,
+                    kind: InsightDatasetKind.Rooms,
                     numRows: this.datasetsMap.get(dsid).getNumRows(),
                 };
             }
