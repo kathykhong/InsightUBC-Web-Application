@@ -3,8 +3,10 @@ import { OptionsValidator } from "./OptionsValidator";
 import { WhereValidator } from "./WhereValidator";
 import {TransformationsValidator} from "./TransformationsValidator";
 export class QueryValidator {
+
     public  static sFields: string[] = ["dept", "id", "instructor", "title", "uuid",
         "fullname", "shortname", "number", "name", "address", "type", "furniture", "href"];
+
     public static mFields: string[] = ["avg", "pass", "fail", "audit", "year", "lat", "lon", "seats"];
     public static allFilters: string[] = ["LT", "GT", "EQ", "IS", "AND", "OR", "NOT"];
     public static logicFilters: string[] = ["AND", "OR"];
