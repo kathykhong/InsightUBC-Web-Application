@@ -1,25 +1,24 @@
-import { Section } from "../dataModel/Section";
-import { InsightError } from "../controller/IInsightFacade";
+import {Room} from "../dataModel/Room";
 
-export class QueryProcessor {
-    public checkFilterCondMet(section: Section, subquery: any): boolean {
+export class RoomsQueryProcessor {
+    public checkFilterCondMet(room: Room, subquery: any): boolean {
         switch (Object.keys(subquery)[0]) {
             case "LT": {
-                return this.filterLT(subquery, section);
+                return this.filterLT(subquery, room);
             }
             case "GT": {
-                return this.filterGT(subquery, section);
+                return this.filterGT(subquery, room);
             }
             case "EQ": {
-                return this.filterEQ(subquery, section);
+                return this.filterEQ(subquery, room);
             }
             case "IS": {
-                return this.filterIS(subquery, section);
+                return this.filterIS(subquery, room);
             }
             case "AND": {
                 let andResultBoolean: boolean = true;
                 for (const arg of subquery.AND) {
-                    if (!this.checkFilterCondMet(section, arg)) {
+                    if (!this.checkFilterCondMet(room, arg)) {
                         andResultBoolean = false;
                     }
                 }
@@ -28,7 +27,7 @@ export class QueryProcessor {
             case "OR": {
                 let orResultBoolean: boolean = false;
                 for (const arg of subquery.OR) {
-                    if (this.checkFilterCondMet(section, arg)) {
+                    if (this.checkFilterCondMet(room, arg)) {
                         orResultBoolean = true;
                     }
                 }
@@ -36,7 +35,7 @@ export class QueryProcessor {
             }
             case "NOT": {
                 let notResultBoolean: boolean = true;
-                if (this.checkFilterCondMet(section, subquery.NOT)) {
+                if (this.checkFilterCondMet(room, subquery.NOT)) {
                     notResultBoolean = false;
                 }
                 return notResultBoolean;
@@ -44,7 +43,7 @@ export class QueryProcessor {
         }
     }
 
-    public filterIS(subquery: any, section: Section): boolean {
+    public filterIS(subquery: any, room: Room): boolean {
         const operatorIS: string = Object.keys(subquery)[0];
         let idStringISarr: string[];
         let argKeyIS = Object.keys(subquery[operatorIS])[0];
@@ -52,25 +51,34 @@ export class QueryProcessor {
         let sfield: string = idStringISarr[1];
         let sValue: any = Object.values(subquery[operatorIS])[0];
         switch (sfield) {
-            case "dept": {
-                return this.checkWildCards(section.getDept(), sValue);
+            case "fullname": {
+                return this.checkWildCards(room.getFullname(), sValue);
             }
-            case "id": {
-                return this.checkWildCards(section.getId(), sValue);
+            case "shortname": {
+                return this.checkWildCards(room.getShortname(), sValue);
             }
-            case "instructor": {
-                return this.checkWildCards(section.getInstructor(), sValue);
+            case "number": {
+                return this.checkWildCards(room.getNumber(), sValue);
             }
-            case "title": {
-                return this.checkWildCards(section.getTitle(), sValue);
+            case "name": {
+                return this.checkWildCards(room.getName(), sValue);
             }
-            case "uuid": {
-                return this.checkWildCards(section.getUuid(), sValue);
+            case "address": {
+                return this.checkWildCards(room.getAddress(), sValue);
+            }
+            case "type": {
+                return this.checkWildCards(room.getType(), sValue);
+            }
+            case "furniture": {
+                return this.checkWildCards(room.getFurniture(), sValue);
+            }
+            case "href": {
+                return this.checkWildCards(room.getLink(), sValue);
             }
         }
     }
 
-    public checkWildCards(sfield: string, sValue: string): boolean {
+    private checkWildCards(sfield: string, sValue: string): boolean {
         let sValueArr = sValue.split("*");
         if (sValue.startsWith("*") && sValue.endsWith("*")) {
             return sfield.includes(sValueArr[1]);
@@ -87,7 +95,7 @@ export class QueryProcessor {
         }
     }
 
-    public filterLT(subquery: any, section: Section): boolean {
+    private filterLT(subquery: any, room: Room): boolean {
         const operatorLT: string = Object.keys(subquery)[0];
         let idStringLTarr: string[];
         let argKeyLT = Object.keys(subquery[operatorLT])[0];
@@ -95,25 +103,19 @@ export class QueryProcessor {
         let mfield: string = idStringLTarr[1];
         let mValue: any = Object.values(subquery[operatorLT])[0];
         switch (mfield) {
-            case "avg": {
-                return section.getAvg() < mValue;
+            case "lat": {
+                return room.getLat() < mValue;
             }
-            case "pass": {
-                return section.getPass() < mValue;
+            case "lon": {
+                return room.getLon() < mValue;
             }
-            case "fail": {
-                return section.getFail() < mValue;
-            }
-            case "audit": {
-                return section.getAudit() < mValue;
-            }
-            case "year": {
-                return section.getYear() < mValue;
+            case "seats": {
+                return room.getSeats() < mValue;
             }
         }
     }
 
-    public filterGT(subquery: any, section: Section): boolean {
+    public filterGT(subquery: any, room: Room): boolean {
         const operatorGT: string = Object.keys(subquery)[0];
         let idStringGTarr: string[];
         let argKeyGT = Object.keys(subquery[operatorGT])[0];
@@ -121,25 +123,19 @@ export class QueryProcessor {
         let mfield: string = idStringGTarr[1];
         let mValue: any = Object.values(subquery[operatorGT])[0];
         switch (mfield) {
-            case "avg": {
-                return section.getAvg() > mValue;
+            case "lat": {
+                return room.getLat() > mValue;
             }
-            case "pass": {
-                return section.getPass() > mValue;
+            case "lon": {
+                return room.getLon() > mValue;
             }
-            case "fail": {
-                return section.getFail() > mValue;
-            }
-            case "audit": {
-                return section.getAudit() > mValue;
-            }
-            case "year": {
-                return section.getYear() > mValue;
+            case "seats": {
+                return room.getSeats() > mValue;
             }
         }
     }
 
-    public filterEQ(subquery: any, section: Section): boolean {
+    public filterEQ(subquery: any, room: Room): boolean {
         const operatorEQ: string = Object.keys(subquery)[0];
         let idStringEQarr: string[];
         let argKeyEQ = Object.keys(subquery[operatorEQ])[0];
@@ -147,20 +143,14 @@ export class QueryProcessor {
         let mfield: string = idStringEQarr[1];
         let mValue: any = Object.values(subquery[operatorEQ])[0];
         switch (mfield) {
-            case "avg": {
-                return section.getAvg() === mValue;
+            case "lat": {
+                return room.getLat() === mValue;
             }
-            case "pass": {
-                return section.getPass() === mValue;
+            case "lon": {
+                return room.getLon() === mValue;
             }
-            case "fail": {
-                return section.getFail() === mValue;
-            }
-            case "audit": {
-                return section.getAudit() === mValue;
-            }
-            case "year": {
-                return section.getYear() === mValue;
+            case "seats": {
+                return room.getSeats() === mValue;
             }
         }
     }

@@ -3,27 +3,18 @@ import { OptionsValidator } from "./OptionsValidator";
 import { WhereValidator } from "./WhereValidator";
 import {TransformationsValidator} from "./TransformationsValidator";
 export class QueryValidator {
-    public allFields: string[] = [
-        "avg",
-        "pass",
-        "fail",
-        "audit",
-        "year",
-        "dept",
-        "id",
-        "instructor",
-        "title",
-        "uuid",
-    ];
 
-    public sFields: string[] = ["dept", "id", "instructor", "title", "uuid"];
-    public mFields: string[] = ["avg", "pass", "fail", "audit", "year"];
-    public allFilters: string[] = ["LT", "GT", "EQ", "IS", "AND", "OR", "NOT"];
-    public logicFilters: string[] = ["AND", "OR"];
-    public mCompareFilters: string[] = ["LT", "GT", "EQ"];
-    public sCompareFilters: string[] = ["IS"];
+    public  static sFields: string[] = ["dept", "id", "instructor", "title", "uuid",
+        "fullname", "shortname", "number", "name", "address", "type", "furniture", "href"];
+
+    public static mFields: string[] = ["avg", "pass", "fail", "audit", "year", "lat", "lon", "seats"];
+    public static allFilters: string[] = ["LT", "GT", "EQ", "IS", "AND", "OR", "NOT"];
+    public static logicFilters: string[] = ["AND", "OR"];
+    public static mCompareFilters: string[] = ["LT", "GT", "EQ"];
+    public static sCompareFilters: string[] = ["IS"];
+    public static applyTOKENS: string[] = ["MAX", "MIN", "AVG", "COUNT", "SUM"];
     public columnIDString: string;
-    public columnFields: string[] = [];
+    public columnKeys: string[] = [];
 
     // first check if dataset is in our map, then check if dataset being queried has been added to data dir (disk)
     public validateQuery(query: any): void {
@@ -83,12 +74,14 @@ export class QueryValidator {
         // }
     }
 
-    // todo: validate that all dataset ids match and are valid
     public splitIDKey(idKey: string): string[] {
         return idKey.split("_");
     }
 
-    public isValidIDString(ID: string): boolean {
+    public isValidIDStringOrApplyKey(ID: string): boolean {
+        if (ID === null || ID === undefined) {
+           return false;
+        }
         if (ID.length < 1) {
             return false;
         }
@@ -100,19 +93,33 @@ export class QueryValidator {
 
     public isValidField(field: string, fieldType: string): boolean {
         if (fieldType === "all") {
-            if (this.allFields.includes(field)) {
+            if (QueryValidator.sFields.includes(field) || QueryValidator.mFields.includes(field)) {
                 return true;
             }
         } else if (fieldType === "sField") {
-            if (this.sFields.includes(field)) {
+            if (QueryValidator.sFields.includes(field)) {
                 return true;
             }
         } else if (fieldType === "mField") {
-            if (this.mFields.includes(field)) {
+            if (QueryValidator.mFields.includes(field)) {
                 return true;
             }
         } else {
             return false;
         }
+    }
+
+    public isValidANYKEY(field: string): boolean {
+        if (this.isValidField(field, "all")) {
+            return true;
+        }
+        if (this.isValidIDStringOrApplyKey(field)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static isValidAPPLYTOKEN(token: string): boolean {
+        return (QueryValidator.applyTOKENS.includes(token));
     }
 }

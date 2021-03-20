@@ -16,6 +16,7 @@ import {QueryValidator} from "../queryModel/QueryValidator";
 import {QueryProcessor} from "../queryModel/QueryProcessor";
 import {CoursesAdder} from "./CoursesAdder";
 import {RoomsAdder} from "./RoomsAdder";
+import {RoomsQueryProcessor} from "../queryModel/RoomsQueryProcessor";
 
 /**
  * This is the main programmatic entry point for the project.
@@ -214,6 +215,10 @@ export default class InsightFacade implements IInsightFacade {
         return Promise.resolve(result);
     }
 
+    // in validate make sure fields are valid
+    // {courses: {},
+    //     rooms: {},
+    //     courseOneID: {}}
     // check if query is valid - options first, then where
     // Abstract data tree for query (nested object)
     // grab the data
@@ -234,25 +239,50 @@ export default class InsightFacade implements IInsightFacade {
                 throw new InsightError("reference dataset not added yet");
             }
             let dataset: Dataset = this.datasetsMap.get(datasetIDToQuery);
-            let qp: QueryProcessor = new QueryProcessor();
-            for (const course of dataset.getCourses().values()) {
-                for (const section of course.getSections()) {
-                    if (qp.checkFilterCondMet(section, query.WHERE)) {
-                        resultSectionObjects.push(section);
+            let datasetKindToQuery: InsightDatasetKind = dataset.getKind();
+            let resultObjects: any[] = [];
+            if (datasetKindToQuery === InsightDatasetKind.Courses) {
+                let qp: QueryProcessor = new QueryProcessor();
+                for (const course of dataset.getCourses().values()) {
+                    for (const section of course.getSections()) {
+                        if (qp.checkFilterCondMet(section, query.WHERE)) {
+                            resultSectionObjects.push(section);
+                        }
                     }
                 }
-            }
-            let resultObjects: any[] = [];
-            let courseID = validator.columnIDString;
-            for (const sectionObject of resultSectionObjects) {
-                let jsonResultElt: any = new Object();
-                for (const arg of validator.columnFields) {
-                    jsonResultElt[courseID + "_" + arg] = sectionObject.getArg(
-                        arg,
-                    );
+                for (const sectionObject of resultSectionObjects) {
+                    let jsonResultElt: any = {};
+                    for (const anykey of validator.columnKeys) {
+                        jsonResultElt[anykey] = sectionObject.getArg(anykey);
+                    }
+                    resultObjects.push(jsonResultElt);
                 }
-                resultObjects.push(jsonResultElt);
+            } else if (datasetKindToQuery === InsightDatasetKind.Rooms) {
+                let rqp: RoomsQueryProcessor = new RoomsQueryProcessor();
+                for (const building of dataset.getBuildings()) {
+                    for (const room of building.getListOfRooms()) {
+                        if (rqp.checkFilterCondMet(room, query.WHERE)) {
+                            resultSectionObjects.push(room);
+                        }
+                    }
+                }
+                for (const roomObject of resultSectionObjects) {
+                    let jsonResultElt: any = {};
+                    for (const anykey of validator.columnKeys) {
+                        jsonResultElt[anykey] = roomObject.getRoomArg(anykey);
+                    }
+                    resultObjects.push(jsonResultElt);
+                }
             }
+
+            // let resultObjects: any[] = [];
+            // for (const sectionObject of resultSectionObjects) {
+            //     let jsonResultElt: any = {};
+            //     for (const anykey of validator.columnKeys) {
+            //         jsonResultElt[anykey] = sectionObject.getArg(anykey);
+            //     }
+            //     resultObjects.push(jsonResultElt);
+            // }
             if (Object.keys(resultObjects).length > 5000) {
                 throw new ResultTooLargeError(
                     "there cannot be more than 5000 results",
