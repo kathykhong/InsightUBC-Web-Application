@@ -1,30 +1,15 @@
 import {RoomsAdder} from "./RoomsAdder";
+import {Room} from "../dataModel/Room";
+import {BuildingsHelper} from "./BuildingsHelper";
 
 export class RoomsHelper {
-    public static findTables(element: any, roomsAdder: RoomsAdder): any {
+    public static findRoomsTables(element: any, roomsAdder: RoomsAdder): any {
         if (element.nodeName === "table") {
-            roomsAdder.buildingTableList.push(element);
+            roomsAdder.dirtyRoomsTables.push(element);
         }
         if (element.childNodes && element.childNodes.length > 0) {
             for (let child of element.childNodes) {
-                this.findTables(child, roomsAdder);
-            }
-        }
-    }
-
-    public static findValidBuildingsTable(listOfTables: any, roomsAdder: RoomsAdder) {
-        for (let table of listOfTables) {
-            let tableHeader = this.findTableHeader(table);
-            this.findBuildingTableHeaderThs(tableHeader, roomsAdder);
-            let listThs: any[] = roomsAdder.dirtyBuildingTableHeaderThs;
-            for (let th of listThs) {
-                if (th.attrs && th.attrs.length > 0) {
-                    for (let attr of th.attrs) {
-                        if (attr.name === "class" && attr.value === "views-field views-field-field-building-image") {
-                            return table;
-                        }
-                    }
-                }
+                this.findRoomsTables(child, roomsAdder);
             }
         }
     }
@@ -193,10 +178,38 @@ export class RoomsHelper {
         return nameNumber;
     }
 
-    public static findBuildingAddress(parsedBuilding: any) {
+    public static extractBuildingAddresses(parsedIndex: any, roomsAdder: RoomsAdder) {
+        roomsAdder.buildingTableList = [];
+        BuildingsHelper.findTables(parsedIndex, roomsAdder);
+        let listOfTables: any[] = roomsAdder.buildingTableList;
+        let validTable: any = BuildingsHelper.findValidBuildingsTable(listOfTables, roomsAdder);
+        let tableBody: any = BuildingsHelper.findBuildingsTableBody(validTable);
+        BuildingsHelper.findBuildingTds(tableBody, roomsAdder);
+        this.findBuildingAddress(roomsAdder.indexBuildingtds, roomsAdder);
+    }
+
+    public static findBuildingName(parsedBuilding: any) {
         let buildingInfo: any = RoomsHelper.findBuildingInfo(parsedBuilding);
-        let address: string = RoomsHelper.retrieveAddress(buildingInfo);
-        return address;
+        let name: string = RoomsHelper.retrieveBuildingName(buildingInfo);
+        return name;
+    }
+
+    public static findBuildingAddress(buildingTds: any[], roomsAdder: RoomsAdder) {
+        for (let td of buildingTds) {
+            if (td.attrs.length > 0 && td.childNodes) {
+                for (let tdAttr of td.attrs) {
+                    if (tdAttr.name === "class" && tdAttr.value === "views-field views-field-field-building-address") {
+                        for (let child of td.childNodes) {
+                            if (child.nodeName === "#text") {
+                                let address: string = child.value;
+                                address = address.trim();
+                                roomsAdder.indexBuildingAddresses.push(address);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public static retrieveBuildingName(buildingInfoElt: any) {
@@ -283,11 +296,4 @@ export class RoomsHelper {
             }
         }
     }
-
-    public static findBuildingName(parsedBuilding: any) {
-        let buildingInfo: any = RoomsHelper.findBuildingInfo(parsedBuilding);
-        let name: string = RoomsHelper.retrieveBuildingName(buildingInfo);
-        return name;
-    }
-
 }

@@ -117,24 +117,32 @@ export class OptionsValidator {
         // check the validity of each key inside COLUMNS
         // for each id_key in columns, split, and check that the key element is one of the valid mkeys or skeys
         let prevID: string = "";
-        for (const key of query.OPTIONS.COLUMNS) {
-            let currIDKeyArr = queryValidator.splitIDKey(key);
-            let currID: string = currIDKeyArr[0];
-            let currKey: string = currIDKeyArr[1];
-            if (!queryValidator.isValidField(currKey, "all")) {
+        for (const anykey of query.OPTIONS.COLUMNS) {
+            let currIDKeyArr;
+            let currID: string;
+            let currKey: string;
+
+            if (anykey.includes("_")) {
+                currIDKeyArr = queryValidator.splitIDKey(anykey);
+                currID = currIDKeyArr[0];
+                currKey = currIDKeyArr[1];
+                if (!queryValidator.isValidIDStringOrApplyKey(currID)) {
+                    throw new InsightError("Invalid dataset id");
+                }
+                // check if all keys have the same id
+                if (prevID === "" || prevID === currID) {
+                    prevID = currID;
+                } else {
+                    throw new InsightError("all keys must have the same id");
+                }
+            } else {
+                currKey = anykey;
+            }
+            // todo: if it is an applykey in columns, must check that it is defined in apply
+            if (!queryValidator.isValidANYKEY(currKey)) {
                 throw new InsightError("Invalid key");
             }
-            queryValidator.columnFields.push(currKey);
-            // added a not here
-            if (!queryValidator.isValidIDString(currID)) {
-                throw new InsightError("Invalid course id");
-            }
-            // check if all keys have the same id
-            if (prevID === "" || prevID === currID) {
-                prevID = currID;
-            } else {
-                throw new InsightError("all keys must have the same id");
-            }
+            queryValidator.columnKeys.push(anykey);
         }
         queryValidator.columnIDString = prevID;
     }
@@ -213,7 +221,7 @@ export class OptionsValidator {
         }
         // check if ORDER's (singular) key is included in COLUMNS
         // added a not here
-        if (!queryValidator.columnFields.includes(currKey)) {
+        if (!queryValidator.columnKeys.includes(currKey)) {
             throw new InsightError(
                 "ORDER key must be included in COLUMNS keys ",
             );
@@ -233,7 +241,7 @@ export class OptionsValidator {
             throw new InsightError("ANYKEY must only contain 1 value");
         }
         // check that the 1 value is a valid key or applykey
-        // todo: how to access query.ANYKEY? multiple places
+        // todo: validate by checking that keys are included in COLUMNS indicated keys
     }
 
     // todo: double check that Obj.values is what should be used here

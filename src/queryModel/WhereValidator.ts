@@ -24,10 +24,7 @@ export class WhereValidator {
         /*if (Object.keys(query)[0] !== "WHERE" || Object.keys(query)[1] !== "WHERE") {
             throw new InsightError("WHERE must be the first or second block");
         }*/
-        // check if WHERE clause exists but is empty
-        if (Object.keys(query.WHERE).length === 0) {
-            throw new InsightError("WHERE cannot be empty");
-        }
+
         // check if WHERE contains zero or one Filter
         if (Object.keys(query.WHERE).length > 1) {
             throw new InsightError("WHERE can only have maximum one filter");
@@ -82,6 +79,9 @@ export class WhereValidator {
                 this.validateFilter(arg, queryValidator);
                 break;
             }
+            case "": {
+                break;
+            }
             default:
                 throw new InsightError("Invalid Filter");
         }
@@ -125,7 +125,7 @@ export class WhereValidator {
                 "More than one underscore was detected in MComp Filter",
             );
         }
-        if (!queryValidator.isValidIDString(idStringMCOMParr[0])) {
+        if (!queryValidator.isValidIDStringOrApplyKey(idStringMCOMParr[0])) {
             throw new InsightError("invalid ID");
         }
         if (!queryValidator.isValidField(idStringMCOMParr[1], "mField")) {
@@ -167,7 +167,7 @@ export class WhereValidator {
                 "More than one underscore was detected in IS Filter",
             );
         }
-        if (!queryValidator.isValidIDString(idStringISarr[0])) {
+        if (!queryValidator.isValidIDStringOrApplyKey(idStringISarr[0])) {
             throw new InsightError("invalid ID");
         }
         if (!queryValidator.isValidField(idStringISarr[1], "sField")) {
@@ -282,16 +282,16 @@ export class WhereValidator {
 
     public isValidFilterKey(filter: string, type: string, queryValidator: QueryValidator, ): boolean {
         if (type === "all") {
-            return queryValidator.allFilters.includes(filter);
+            return QueryValidator.allFilters.includes(filter);
         }
         if (type === "logicFilter") {
-            return queryValidator.logicFilters.includes(filter);
+            return QueryValidator.logicFilters.includes(filter);
         }
         if (type === "mCompareFilters") {
-            return queryValidator.mCompareFilters.includes(filter);
+            return QueryValidator.mCompareFilters.includes(filter);
         }
         if (type === "sCompareFilters") {
-            return queryValidator.sCompareFilters.includes(filter);
+            return QueryValidator.sCompareFilters.includes(filter);
         }
     }
 }
