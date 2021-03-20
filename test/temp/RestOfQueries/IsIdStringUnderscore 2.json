@@ -1,0 +1,18 @@
+{
+    "title": "Very invalid query",
+    "query": {
+        "WHERE": {
+            "IS": {
+                "cou_rses_dept": "chem"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_dept",
+                "courses_avg"
+            ]
+        }
+    },
+    "isQueryValid": false,
+    "result": "InsightError"
+}

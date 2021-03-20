@@ -275,14 +275,6 @@ export default class InsightFacade implements IInsightFacade {
                 }
             }
 
-            // let resultObjects: any[] = [];
-            // for (const sectionObject of resultSectionObjects) {
-            //     let jsonResultElt: any = {};
-            //     for (const anykey of validator.columnKeys) {
-            //         jsonResultElt[anykey] = sectionObject.getArg(anykey);
-            //     }
-            //     resultObjects.push(jsonResultElt);
-            // }
             if (Object.keys(resultObjects).length > 5000) {
                 throw new ResultTooLargeError(
                     "there cannot be more than 5000 results",
