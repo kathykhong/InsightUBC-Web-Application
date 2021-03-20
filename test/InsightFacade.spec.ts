@@ -601,9 +601,9 @@ describe("InsightFacade Add/Remove/List Dataset", function () {
     //         }); // .then(result of first .then call will be passed as param to this)
     // });
 
-    it("Should add a dataset, then another dataset, then list both", function () {
-        const id1: string = "zoolOnly36results";
-        const id2: string = "nestOnly82results";
+    /*it("Should add a dataset, then another dataset, then list both", function () {
+        const id1: string = "courses2";
+        const id2: string = "courses";
         const expectedOnAdd1: string[] = [id1];
         const expectedOnAdd2: string[] = [id1, id2];
         const expectedOnList: InsightDataset[] = [
@@ -620,8 +620,7 @@ describe("InsightFacade Add/Remove/List Dataset", function () {
             .then(() => {
                 // next function call here
                 const futureResult2: Promise<
-                    string[]
-                > = insightFacade.addDataset(
+                    string[]> = insightFacade.addDataset(
                     id2,
                     datasets[id2],
                     InsightDatasetKind.Courses,
@@ -637,6 +636,35 @@ describe("InsightFacade Add/Remove/List Dataset", function () {
                         );
                     });
             }); // .then(result of first .then call will be passed as param to this)
+    });*/
+
+    it("Should add a valid data set and list it", function () {
+        const firstId: string = "courses";
+        return insightFacade
+            .addDataset(firstId, datasets[firstId], InsightDatasetKind.Courses)
+            .then(() => {
+                return insightFacade.listDatasets();
+            })
+            .then((res: InsightDataset[]) => {
+                let insightDataSetObj: InsightDataset = {
+                    id: "courses", kind: InsightDatasetKind.Courses, numRows: 64612
+                };
+                return expect(res).to.deep.equal([insightDataSetObj]);
+            });
+    });
+
+    it ("Should add a valid rooms data set and list it", function () {
+        const firstId: string = "rooms";
+        return insightFacade.addDataset(firstId, datasets[firstId], InsightDatasetKind.Rooms)
+            .then(() => {
+                return insightFacade.listDatasets();
+            })
+            .then ((res: InsightDataset[]) => {
+                let insightDatasetObj: InsightDataset = {
+                    id: "rooms", kind: InsightDatasetKind.Rooms, numRows: 364
+                };
+                return expect(res).to.deep.equal([insightDatasetObj]);
+            });
     });
 
     it("Should add a dataset, then delete it, then list empty", function () {
