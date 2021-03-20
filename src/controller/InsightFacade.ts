@@ -34,7 +34,6 @@ export default class InsightFacade implements IInsightFacade {
         this.datasetsMap = new Map();
     }
 
-    // TODO: valid zip file check
     public addDataset(
         id: string,
         content: string, // check null and undefined
@@ -82,10 +81,6 @@ export default class InsightFacade implements IInsightFacade {
     // return an array of promises. each promise for each file.async
     public getResult(r: JSZip): Array<Promise<any>> {
         let result: Array<Promise<any>> = [];
-        // check that courses/ exists in the unzipped dir
-        // foreach(item)
-        // Log.trace(r);
-        // clarify with TA wtf .folder does
         r.folder("courses").forEach(function (pathname, file) {
             let prom: Promise<any>;
             prom = file.async("string").then(function (response) {
@@ -173,7 +168,6 @@ export default class InsightFacade implements IInsightFacade {
             return Promise.reject(new NotFoundError());
         }
 
-        // remove from data dir
         const path = "./data/" + id;
         fs.unlinkSync(path);
         // remove from ds arr and map
