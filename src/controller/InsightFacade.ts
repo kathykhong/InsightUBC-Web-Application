@@ -269,7 +269,7 @@ export default class InsightFacade implements IInsightFacade {
                 }
             }
 
-            // let resultObjects: any[] = [];
+            // let resultObjects: any[] = []
             // for (const sectionObject of resultSectionObjects) {
             //     let jsonResultElt: any = {};
             //     for (const anykey of validator.columnKeys) {
