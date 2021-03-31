@@ -2,7 +2,7 @@ import * as chai from "chai";
 import {expect} from "chai";
 import * as fs from "fs-extra";
 import * as chaiAsPromised from "chai-as-promised";
-import {InsightDataset, InsightDatasetKind, InsightError, } from "../src/controller/IInsightFacade";
+import {InsightDataset, InsightDatasetKind, InsightError} from "../src/controller/IInsightFacade";
 import InsightFacade from "../src/controller/InsightFacade";
 import Log from "../src/Util";
 import TestUtil from "./TestUtil";
@@ -760,6 +760,10 @@ describe("InsightFacade PerformQuery", () => {
             path: "./test/data/courses.zip",
             kind: InsightDatasetKind.Courses,
         },
+        rooms: {
+            path: "./test/data/rooms.zip",
+            kind: InsightDatasetKind.Rooms,
+        }
     };
     let insightFacade: InsightFacade;
     let testQueries: ITestQuery[] = [];

@@ -138,7 +138,6 @@ export class RoomsAdder {
                      building = this.setAllRoomsContent(validRoomsTable, building,
                          buildingAddress, buildingName, geoLocDict, buildingNamesWGeo);
                      datasetloc.getBuildings().push(building);
-                     Log.trace("lol");
                  }
              }
          }
@@ -181,12 +180,14 @@ export class RoomsAdder {
         RoomsHelper.findRoomsRows(tbody, this);
         let roomsRows: any = this.dirtyRoomsRows;
         for (let row of roomsRows) {
+            this.dirtyRoomsTds = [];
             RoomsHelper.findRoomRowTds(row, this);
             let room: Room = new Room();
             let link: string = RoomsHelper.findRoomLink(this.dirtyRoomsTds);
-            let roomNameNumber: string = RoomsHelper.extractRoomsNameOrNumber(link);
-            let roomNameNumberArr: string[] = roomNameNumber.split("-");
-            let roomName: string = roomNameNumberArr[0];
+            let roomNameNumber: string = RoomsHelper.extractRoomsNameOrNumber(link); // "ALRD-505"
+            let roomNameNumberArr: string[] = [];
+            roomNameNumberArr = roomNameNumber.split("-"); // [ALRD, 505]
+            let roomName: string = roomNameNumberArr[0]; // "ALRD"
             let roomNumber: string = roomNameNumberArr[1];
             roomNameNumber = roomName + "_" + roomNumber;
             let roomSeats: number = RoomsHelper.findRoomsSeats(this.dirtyRoomsTds);
@@ -234,7 +235,6 @@ export class RoomsAdder {
                 let prom: Promise<string>;
                 prom = buildingFile.async("string");
                 result.push(prom);
-                Log.trace("hello");
             } catch (err) {
                 Log.trace(err);
             }
@@ -253,7 +253,6 @@ export class RoomsAdder {
             buildingPath = RoomsHelper.modifyBuildingPath(buildingPath);
             let buildingCode: string = RoomsHelper.extractRoomsNameOrNumber(buildingPath);
             this.buildingPathMap.set(buildingCode, buildingPath);
-            Log.trace("hi");
         }
     }
 

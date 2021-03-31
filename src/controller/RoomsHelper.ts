@@ -1,5 +1,4 @@
 import {RoomsAdder} from "./RoomsAdder";
-import {Room} from "../dataModel/Room";
 import {BuildingsHelper} from "./BuildingsHelper";
 
 export class RoomsHelper {
@@ -76,7 +75,6 @@ export class RoomsHelper {
         if (theadElt.nodeName === "th") {
             roomsAdder.dirtyBuildingTableHeaderThs.push(theadElt);
         }
-
         if (theadElt.childNodes && theadElt.childNodes.length > 0) {
             for (let child of theadElt.childNodes) {
                 this.findBuildingTableHeaderThs(child, roomsAdder);
@@ -88,7 +86,6 @@ export class RoomsHelper {
         if (tableElt.nodeName === "thead") {
             return tableElt;
         }
-
         if (tableElt.childNodes && tableElt.childNodes.length > 0) {
             for (let child of tableElt.childNodes) {
                 let thead: any = this.findTableHeader(child);
@@ -103,7 +100,6 @@ export class RoomsHelper {
         if (roomsTBodyElt.nodeName === "td" && roomsTBodyElt.childNodes.length > 0) {
             roomsAdder.dirtyRoomsTds.push(roomsTBodyElt);
         }
-
         if (roomsTBodyElt.childNodes && roomsTBodyElt.childNodes.length > 0) {
             for (let child of roomsTBodyElt.childNodes) {
                 this.findRoomRowTds(child, roomsAdder);
@@ -127,7 +123,6 @@ export class RoomsHelper {
         if (roomsTBodyElt.nodeName === "tbody") {
             return roomsTBodyElt;
         }
-
         if (roomsTBodyElt.childNodes && roomsTBodyElt.childNodes.length > 0) {
             for (let child of roomsTBodyElt.childNodes) {
                 let tbody: any = this.findRoomsTableBody(child);
@@ -253,8 +248,10 @@ export class RoomsHelper {
                     if (attr.name === "class" && attr.value === "views-field views-field-field-room-capacity") {
                         for (let child of td.childNodes) {
                             if (child.nodeName === "#text") {
-                                let roomCapacity: number = child.value;
-                                return roomCapacity;
+                                let roomCapacityString: string = child.value;
+                                roomCapacityString = roomCapacityString.trim();
+                                let roomCapacityNumber: number = Number(roomCapacityString);
+                                return roomCapacityNumber;
                             }
                         }
                     }
@@ -271,7 +268,7 @@ export class RoomsHelper {
                         for (let child of td.childNodes) {
                             if (child.nodeName === "#text") {
                                 let type: string = child.value;
-                                return type;
+                                return type.trim();
                             }
                         }
                     }
@@ -288,6 +285,7 @@ export class RoomsHelper {
                         for (let child of td.childNodes) {
                             if (child.nodeName === "#text") {
                                 let furnitureType: string = child.value;
+                                furnitureType = furnitureType.trim();
                                 return furnitureType;
                             }
                         }

@@ -10,6 +10,7 @@ export class Room {
     public type: string;
     public furniture: string;
     public href: string;
+    public applyKeyStorage: any = {} ; // {overallAvg: 55, maxFail: 6};
 
 
     public setLatLon(data: any) {
@@ -100,8 +101,39 @@ export class Room {
         return this.href;
     }
 
-    public getRoomArg(anykey: string): string {
-      return "";
+    public getArg(anykey: string): any {
+      switch (anykey) {
+          case "latLon": {
+              return this.getLatLon();
+          }
+          case "fullname": {
+              return this.getFullname();
+          }
+          case "shortname": {
+              return this.getShortname();
+          }
+          case "number": {
+              return this.getNumber();
+          }
+          case "name": {
+              return this.getName();
+          }
+          case "address": {
+              return this.getAddress();
+          }
+          case "type": {
+              return this.getType();
+          }
+          case "seats": {
+              return this.getSeats();
+          }
+          case "furniture": {
+              return this.getFurniture();
+          }
+          case "href": {
+              return this.getLink();
+          }
+      }
     }
 
 }
