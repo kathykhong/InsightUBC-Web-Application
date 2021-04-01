@@ -1,0 +1,31 @@
+{
+    "title": "",
+    "query": {
+        "WHERE": {
+            "IS": {
+                "courses_dept": "a*"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_title",
+                "overallAvg"
+            ]
+        },
+        "TRANSFORMATIONS": {
+            "FLOWER": [
+                "courses_dept",
+                "courses_title"
+            ],
+            "APPLY": [
+                {
+                    "overallAvg": {
+                        "AVG": "courses_avg"
+                    }
+                }
+            ]
+        }
+    },
+    "isQueryValid": false,
+    "result": "InsightError"
+}

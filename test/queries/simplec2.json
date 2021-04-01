@@ -18,8 +18,8 @@
             ],
             "APPLY": [
                 {
-                    "countYears": {
-                        "COUNT": "courses_year"
+                    "overallAvg": {
+                        "AVG": "courses_avg"
                     }
                 }
             ]

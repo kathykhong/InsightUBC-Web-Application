@@ -85,7 +85,6 @@ export class RoomsAdder {
         let addresses: string[] = this.indexBuildingAddresses;
         return this.getBuildingsHTMLresult(zipObj)
             .then((htmlStringArr: string[]) => {
-                Log.trace("hi");
                 return this.parseBuildingsHTML(htmlStringArr);
             })
             .then((parsedBuildings: any[]) => {
@@ -93,7 +92,6 @@ export class RoomsAdder {
                 return this.extractAllGeoLocation(parsedBuildings, addresses);
             })
             .then((geoLocDict: any[]) => {
-                Log.trace("geo");
                 return this.extractBuildingsDetails
                 (this.parsedBuildings, dataset, geoLocDict, this.geoBuildingNames, addresses);
             })
@@ -128,7 +126,6 @@ export class RoomsAdder {
             // let buildingAddress: string = RoomsHelper.findBuildingAddress(parsedBuilding);
             let buildingName: string = RoomsHelper.findBuildingName(parsedBuilding);
             if (buildingNamesWGeo.includes(buildingName)) {
-                 Log.trace("hi");
                  this.dirtyRoomsTables = [];
                  RoomsHelper.findRoomsTables(parsedBuilding, this);
                  let tables = this.dirtyRoomsTables;
@@ -142,7 +139,6 @@ export class RoomsAdder {
              }
          }
         datasetloc.setNumRows(this.roomsNumRows);
-        Log.trace("returning here");
         return Promise.resolve(datasetloc);
     }
 
@@ -175,7 +171,6 @@ export class RoomsAdder {
     public setAllRoomsContent(validRoomsTable: any, building: Building, buildingAddress: string,
                               buildingName: string, geoLocDict: any, buildingNamesWGeo: string[]) {
         let tbody: any = RoomsHelper.findRoomsTableBody(validRoomsTable);
-        Log.trace("hi");
         this.dirtyRoomsRows = [];
         RoomsHelper.findRoomsRows(tbody, this);
         let roomsRows: any = this.dirtyRoomsRows;

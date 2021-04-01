@@ -197,7 +197,7 @@ export class OptionsValidator {
     private validateANYKEY(query: any, queryValidator: QueryValidator) {
         // check if anykey is empty, null, undefined
         if (Object.values(query).includes(null) ||
-        Object.values(query).includes(undefined)) {
+            Object.values(query).includes(undefined)) {
             throw new InsightError("ANYKEY values cannot contain null or undefined values");
         }
         // check if anykey contains 1 value
@@ -241,11 +241,12 @@ export class OptionsValidator {
                 if (!queryValidator.isValidIDStringOrApplyKey(currID)) {
                     throw new InsightError("Invalid dataset id");
                 }
-            } else {
-                currKey = anykey;
-            }
-            if (!queryValidator.columnKeys.includes(currKey)) {
-                throw new InsightError("ORDER's keys keys (LOL) must be present in COLUMNS keys");
+                if (!queryValidator.isValidField(currKey, "all")) {
+                    throw new InsightError("Field is invalid");
+                }
+                if (!queryValidator.columnKeys.includes(anykey)) {
+                    throw new InsightError("ORDER's keys keys (LOL) must be present in COLUMNS keys");
+                }
             }
         }
     }

@@ -46,7 +46,7 @@ export class QueryValidator {
         optionsValidator.validateOPTIONS(query, this);
         whereValidator.validateWHERE(query, this);
         if (Object.keys(query).length === 3) {
-            TransformationsValidator.validateTRANSFORMATIONS(query);
+            TransformationsValidator.validateTRANSFORMATIONS(query, this);
         }
     }
 
