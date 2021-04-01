@@ -4,7 +4,7 @@ import {Dataset} from "../dataModel/Dataset";
 import {AnykeyHandler} from "./AnykeyHandler";
 
 export class TransformationsProcessor {
-        // handle GROUP
+    // handle GROUP
     public static handleGroup(query: any, validator: QueryValidator, resultSectionorRoomObjects: any[],
                               dataset: Dataset) {
         let grouparr = query.TRANSFORMATIONS.GROUP;
@@ -56,7 +56,7 @@ export class TransformationsProcessor {
         if (query.TRANSFORMATIONS.APPLY.length !== 0) {
             for (const applyRule of query.TRANSFORMATIONS.APPLY) {
                 let applyKey: string = Object.keys(applyRule)[0]; // overallAvg
-                let applyTokenObject: string = query.TRANSFORMATIONS.APPLY[0][applyKey];
+                let applyTokenObject: string = applyRule[applyKey];
                 // {AVG:c "courses_avg}
                 let applyToken: string = Object.keys(applyTokenObject)[0]; // AVG
                 let mskey: any = Object.values(applyTokenObject)[0]; // courses_avg

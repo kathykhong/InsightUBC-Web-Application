@@ -51,7 +51,6 @@ export default class InsightFacade implements IInsightFacade {
         if (content === null || content === undefined) {
             return Promise.reject(new InsightError("content string cannot be null or undefined"));
         }
-        // alternative ensureFileSync
         if (fs.existsSync(".data/" + id + ".zip")) {
             return Promise.reject(new InsightError("file already added"));
         }
@@ -77,12 +76,8 @@ export default class InsightFacade implements IInsightFacade {
         return true;
     }
 
-    // confirm with TA
-    // fs.writeFileSync(".data/" + id + ".zip", content);
-    // return an array of promises. each promise for each file.async
     public getResult(r: JSZip): Array<Promise<any>> {
         let result: Array<Promise<any>> = [];
-        // clarify with TA wtf .folder does
         r.folder("courses").forEach(function (pathname, file) {
             let prom: Promise<any>;
             prom = file.async("string").then(function (response) {
@@ -95,7 +90,6 @@ export default class InsightFacade implements IInsightFacade {
     }
 
     public extractJSON(datasetJSONs: any[], newDataset: Dataset): Dataset {
-        // TODO:  check for valid /course root directory
         let numRows = 0;
         let courseKey: string;
         for (const course of datasetJSONs) {
@@ -164,10 +158,8 @@ export default class InsightFacade implements IInsightFacade {
             return Promise.reject(new NotFoundError());
         }
 
-        // remove from data dir
         const path = "./data/" + id;
         fs.unlinkSync(path);
-        // remove from ds arr and map
         this.datasetsMap.delete(id);
         this.removeItemOnce(this.currentDatasets, id);
         return Promise.resolve(id);
@@ -227,22 +219,30 @@ export default class InsightFacade implements IInsightFacade {
                 if (Object.keys(query).includes("TRANSFORMATIONS")) {
                     groupApplies = TransformationsProcessor.handleGroup(query, validator,
                         resultSectionorRoomObjects, dataset);
+                    let groupingsArrs: any[] = [];
+                    for (let key of groupApplies.keys()) {
+                        groupingsArrs.push(groupApplies.get(key)[0]);
+                    }
+                    this.prepareOutputJSON(query, groupingsArrs, validator, resultObjects);
+                } else {
+                    this.prepareOutputJSON(query, resultSectionorRoomObjects, validator, resultObjects);
                 }
             } else if (datasetKindToQuery === InsightDatasetKind.Rooms) {
                 let rqp: RoomsQueryProcessor = new RoomsQueryProcessor();
                 PerformQueryHelper.roomsQueryProcessorHelper(dataset, rqp, query, resultSectionorRoomObjects);
 
-                // check if TRANSFORMAtions
                 if (Object.keys(query).includes("TRANSFORMATIONS")) {
                     groupApplies = TransformationsProcessor.handleGroup(query, validator,
                         resultSectionorRoomObjects, dataset);
+                    let groupingsArrs: any[] = [];
+                    for (let key of groupApplies.keys()) {
+                        groupingsArrs.push(groupApplies.get(key)[0]);
+                    }
+                    this.prepareOutputJSON(query, groupingsArrs, validator, resultObjects);
+                } else {
+                    this.prepareOutputJSON(query, resultSectionorRoomObjects, validator, resultObjects);
                 }
             }
-            let groupingsArrs: any[] = [];
-            for (let key of groupApplies.keys()) {
-                groupingsArrs.push(groupApplies.get(key)[0]);
-            }
-            this.prepareOutputJSON(query, groupingsArrs, validator, resultObjects);
 
             return Promise.resolve(resultObjects);
         } catch (err) {

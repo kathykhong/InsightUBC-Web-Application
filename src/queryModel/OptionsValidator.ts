@@ -155,9 +155,6 @@ export class OptionsValidator {
             throw new InsightError("ORDER cannot have an empty value");
         }
         if (typeof query.OPTIONS.ORDER === "string") {
-            if (Object.values(query.OPTIONS.ORDER).length > 1) {
-                throw new InsightError("ORDER can only have one value (c1)");
-            }
             let currIDKeyArr = queryValidator.splitIDKey(query.OPTIONS.ORDER);
             let currID: string = currIDKeyArr[0];
             let currKey: string = currIDKeyArr[1];
@@ -171,7 +168,7 @@ export class OptionsValidator {
             }
             // check if ORDER's (singular) key is included in COLUMNS
             // added a not here
-            if (!queryValidator.columnKeys.includes(currKey)) {
+            if (!queryValidator.columnKeys.includes(query.OPTIONS.ORDER)) {
                 throw new InsightError("ORDER key must be included in COLUMNS keys ");
             }
             // query.OPTIONS.ORDER is an object

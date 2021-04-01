@@ -15,10 +15,12 @@ export class TransformationsValidator {
         if (!Object.keys(query.TRANSFORMATIONS).includes("GROUP")) {
             throw new InsightError("TRANSFORMATIONS must contain GROUP");
         }
+        this.GROUPandAPPLYKeys = [];
         this.validateGROUP(query, qvalidator);
         if (!Object.keys(query.TRANSFORMATIONS).includes("APPLY")) {
             throw new InsightError("TRANSFORMATIONS must contain APPLY");
         }
+
         this.validateAPPLY(query, qvalidator);
         this.validateCOLUMNSKeysAreInGROUPorAPPLY(query, qvalidator);
     }
@@ -31,15 +33,45 @@ export class TransformationsValidator {
         if (!Array.isArray((query.TRANSFORMATIONS.APPLY))) {
             throw new InsightError("APPLY's value must be of type Array");
         }
-        for (const applyObject of query.TRANSFORMATIONS.APPLY) {
-           if (typeof applyObject !== "object") {
-               throw new InsightError("APPLY's array must contain objects only");
-           }
-           if (Object.keys(applyObject).length !== 1) {
-               throw new InsightError("APPLY's array objects must only have one applyKey");
-           }
-           TransformationsValidator.validateInnerAPPLY(applyObject, qvalidator);
+
+        if (query.TRANSFORMATIONS.APPLY.length === 0) {
+            for (const key of qvalidator.columnKeys) {
+                if (!key.includes( "_")) {
+                    throw new InsightError("Apply list is empty but columns contains apply key");
+                }
+            }
         }
+        let applyKeyArr: string[] = [];
+        for (const applyObject of query.TRANSFORMATIONS.APPLY) {
+            if (typeof applyObject !== "object") {
+                throw new InsightError("APPLY's array must contain objects only");
+            }
+            if (Object.keys(applyObject).length !== 1) {
+                throw new InsightError("APPLY's array objects must only have one applyKey");
+            }
+            // push to check dup apply key
+            let applyKey: string = Object.keys(applyObject)[0];
+            applyKeyArr.push(applyKey);
+            // TransformationsValidator.validateInnerAPPLY(applyObject, qvalidator);
+        }
+
+        let uniqueArr: string[] = [];
+        for (const key of applyKeyArr) {
+            if (uniqueArr.includes(key)) {
+                throw new InsightError("Apply block contains duplicate apply keys");
+            } else {
+                uniqueArr.push(key);
+            }
+        }
+
+        // push to check columns in group and apply
+        for (const applyObject of query.TRANSFORMATIONS.APPLY) {
+            this.GROUPandAPPLYKeys.push(Object.keys(applyObject)[0]);
+        }
+        for (const applyObject of query.TRANSFORMATIONS.APPLY) {
+            TransformationsValidator.validateInnerAPPLY(applyObject, qvalidator);
+        }
+
 
     }
 
@@ -125,7 +157,25 @@ export class TransformationsValidator {
 
     public static validateApplyTOKEN (thisApplyToken: string, qvalidator: QueryValidator, currKey: string) {
         switch (thisApplyToken) {
-            case "MAX" || "MIN" || "AVG" || "SUM" : {
+            case "MAX" : {
+                if (!qvalidator.isValidField(currKey, "mField")) {
+                    throw new InsightError("This applyTOKEN must be applied to mFields only");
+                }
+                break;
+            }
+            case "MIN": {
+                if (!qvalidator.isValidField(currKey, "mField")) {
+                    throw new InsightError("This applyTOKEN must be applied to mFields only");
+                }
+                break;
+            }
+            case "AVG": {
+                if (!qvalidator.isValidField(currKey, "mField")) {
+                    throw new InsightError("This applyTOKEN must be applied to mFields only");
+                }
+                break;
+            }
+            case "SUM": {
                 if (!qvalidator.isValidField(currKey, "mField")) {
                     throw new InsightError("This applyTOKEN must be applied to mFields only");
                 }
