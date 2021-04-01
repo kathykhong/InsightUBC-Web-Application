@@ -17,6 +17,8 @@ import {QueryProcessor} from "../queryModel/QueryProcessor";
 import {CoursesAdder} from "./CoursesAdder";
 import {RoomsAdder} from "./RoomsAdder";
 import {RoomsQueryProcessor} from "../queryModel/RoomsQueryProcessor";
+import {TransformationsProcessor} from "../queryModel/TransformationsProcessor";
+import {PerformQueryHelper} from "./PerformQueryHelper";
 
 /**
  * This is the main programmatic entry point for the project.
@@ -49,7 +51,6 @@ export default class InsightFacade implements IInsightFacade {
         if (content === null || content === undefined) {
             return Promise.reject(new InsightError("content string cannot be null or undefined"));
         }
-        // alternative ensureFileSync
         if (fs.existsSync(".data/" + id + ".zip")) {
             return Promise.reject(new InsightError("file already added"));
         }
@@ -63,7 +64,7 @@ export default class InsightFacade implements IInsightFacade {
             result = roomsAdder.addDatasetRooms(id, content, kind, this);
         }
         return Promise.resolve(result);
-}
+    }
 
     public isAllWhitespace(str: string): boolean {
         let strarr: string[] = str.split("");
@@ -75,10 +76,6 @@ export default class InsightFacade implements IInsightFacade {
         return true;
     }
 
-    // confirm with TA
-    // fs.writeFileSync(".data/" + id + ".zip", content);
-
-    // return an array of promises. each promise for each file.async
     public getResult(r: JSZip): Array<Promise<any>> {
         let result: Array<Promise<any>> = [];
         r.folder("courses").forEach(function (pathname, file) {
@@ -86,20 +83,13 @@ export default class InsightFacade implements IInsightFacade {
             prom = file.async("string").then(function (response) {
                 let parsed = JSON.parse(response);
                 return Promise.resolve(parsed);
-                // result.push(parsed);
             });
             result.push(prom);
         });
         return result;
     }
 
-    // TODO: where to initialize our new dataset, each course, each section, and link them together
-    // TODO: figure out how to set new course, bc constructor takes in a list of sections.
     public extractJSON(datasetJSONs: any[], newDataset: Dataset): Dataset {
-        // for each course object in datasetJSONs
-        // TODO:  check for valid /course root directory
-        // TODO:  for valid courses will be in json format
-        //
         let numRows = 0;
         let courseKey: string;
         for (const course of datasetJSONs) {
@@ -170,7 +160,6 @@ export default class InsightFacade implements IInsightFacade {
 
         const path = "./data/" + id;
         fs.unlinkSync(path);
-        // remove from ds arr and map
         this.datasetsMap.delete(id);
         this.removeItemOnce(this.currentDatasets, id);
         return Promise.resolve(id);
@@ -186,8 +175,6 @@ export default class InsightFacade implements IInsightFacade {
 
     public listDatasets(): Promise<InsightDataset[]> {
         let result: InsightDataset[] = [];
-        // [ {id, kind, numrows} {} {} ]
-        // from datasetMap, retrieve id, kind, numrows for each datasets
         for (const dsid of this.datasetsMap.keys()) {
             let currDS: InsightDataset;
             if (this.datasetsMap.get(dsid).getKind() === InsightDatasetKind.Courses) {
@@ -209,89 +196,101 @@ export default class InsightFacade implements IInsightFacade {
         return Promise.resolve(result);
     }
 
-    // in validate make sure fields are valid
-    // {courses: {},
-    //     rooms: {},
-    //     courseOneID: {}}
-    // check if query is valid - options first, then where
-    // Abstract data tree for query (nested object)
-    // grab the data
-    // check memory and disk for dataset being queried
-    // check the query, do the filtering with the dataset
-    // read the query into our query data struct
-    // for every level in the query, we want to
-    // input: query: JSON -> JSON
-    // instance of insightfacade for our dataset. pass this in
     public performQuery(query: any): Promise<any[]> {
         try {
             let validator: QueryValidator = new QueryValidator();
-            // check if query is valid
+            // check if query is valid HERE
             validator.validateQuery(query);
-            let resultSectionObjects: any[] = [];
+            let resultSectionorRoomObjects: any[] = [];
             let datasetIDToQuery: string = validator.columnIDString;
-            if (!this.datasetsMap.has(datasetIDToQuery)) {
+            if (!this.datasetsMap.has(datasetIDToQuery)) { // datasetIDToQuery: "rooms"
                 throw new InsightError("reference dataset not added yet");
+                // currentDatasets = ["courses"], datasetsMap = {"courses" => Dataset"}
             }
             let dataset: Dataset = this.datasetsMap.get(datasetIDToQuery);
             let datasetKindToQuery: InsightDatasetKind = dataset.getKind();
             let resultObjects: any[] = [];
+            let groupApplies: Map<string, Section[]>;
+
             if (datasetKindToQuery === InsightDatasetKind.Courses) {
                 let qp: QueryProcessor = new QueryProcessor();
-                for (const course of dataset.getCourses().values()) {
-                    for (const section of course.getSections()) {
-                        if (qp.checkFilterCondMet(section, query.WHERE)) {
-                            resultSectionObjects.push(section);
-                        }
+                PerformQueryHelper.coursesQueryProcessorHelper(dataset, qp, query, resultSectionorRoomObjects);
+                // check if TRANSFORMAtions
+                if (Object.keys(query).includes("TRANSFORMATIONS")) {
+                    groupApplies = TransformationsProcessor.handleGroup(query, validator,
+                        resultSectionorRoomObjects, dataset);
+                    let groupingsArrs: any[] = [];
+                    for (let key of groupApplies.keys()) {
+                        groupingsArrs.push(groupApplies.get(key)[0]);
                     }
-                }
-                for (const sectionObject of resultSectionObjects) {
-                    let jsonResultElt: any = {};
-                    for (const anykey of validator.columnKeys) {
-                        jsonResultElt[anykey] = sectionObject.getArg(anykey);
-                    }
-                    resultObjects.push(jsonResultElt);
+                    this.prepareOutputJSON(query, groupingsArrs, validator, resultObjects);
+                } else {
+                    this.prepareOutputJSON(query, resultSectionorRoomObjects, validator, resultObjects);
                 }
             } else if (datasetKindToQuery === InsightDatasetKind.Rooms) {
                 let rqp: RoomsQueryProcessor = new RoomsQueryProcessor();
-                for (const building of dataset.getBuildings()) {
-                    for (const room of building.getListOfRooms()) {
-                        if (rqp.checkFilterCondMet(room, query.WHERE)) {
-                            resultSectionObjects.push(room);
-                        }
+                PerformQueryHelper.roomsQueryProcessorHelper(dataset, rqp, query, resultSectionorRoomObjects);
+
+                if (Object.keys(query).includes("TRANSFORMATIONS")) {
+                    groupApplies = TransformationsProcessor.handleGroup(query, validator,
+                        resultSectionorRoomObjects, dataset);
+                    let groupingsArrs: any[] = [];
+                    for (let key of groupApplies.keys()) {
+                        groupingsArrs.push(groupApplies.get(key)[0]);
                     }
+                    this.prepareOutputJSON(query, groupingsArrs, validator, resultObjects);
+                } else {
+                    this.prepareOutputJSON(query, resultSectionorRoomObjects, validator, resultObjects);
                 }
-                for (const roomObject of resultSectionObjects) {
-                    let jsonResultElt: any = {};
-                    for (const anykey of validator.columnKeys) {
-                        jsonResultElt[anykey] = roomObject.getRoomArg(anykey);
-                    }
-                    resultObjects.push(jsonResultElt);
-                }
-            }
-
-
-            // let resultObjects: any[] = [];
-            // for (const sectionObject of resultSectionObjects) {
-            //     let jsonResultElt: any = {};
-            //     for (const anykey of validator.columnKeys) {
-            //         jsonResultElt[anykey] = sectionObject.getArg(anykey);
-            //     }
-            //     resultObjects.push(jsonResultElt);
-            // }
-
-            if (Object.keys(resultObjects).length > 5000) {
-                throw new ResultTooLargeError(
-                    "there cannot be more than 5000 results",
-                );
-            }
-
-            if (Object.keys(query.OPTIONS).length === 2) {
-                let argSort = query.OPTIONS.ORDER;
-                resultObjects.sort((a, b) => a[argSort] - b[argSort]);
             }
             return Promise.resolve(resultObjects);
         } catch (err) {
             return Promise.reject(err);
+        }
+    }
+
+    private prepareOutputJSON(query: any, groupingsArr: any[], validator: QueryValidator,
+                              resultObjects: any[]) {
+        for (const object of groupingsArr) {
+            let jsonResultElt: any = {};
+            for (let anykey of validator.columnKeys) {
+                if (anykey.includes("_")) {
+                    let currIDKeyArr = validator.splitIDKey(anykey);
+                    let currID = currIDKeyArr[0];
+                    anykey = currIDKeyArr[1];
+                    jsonResultElt[currID + "_" + anykey] = object.getArg(anykey);
+                } else {
+                    jsonResultElt[anykey] = object.applyKeyStorage[anykey];
+                }
+            }
+            resultObjects.push(jsonResultElt);
+        }
+
+        if (Object.keys(resultObjects).length > 5000) {
+            throw new ResultTooLargeError(
+                "there cannot be more than 5000 results",
+            );
+        }
+        this.sortResults(query, resultObjects);
+    }
+
+    private sortResults(query: any, resultObjects: any[]) {
+        if (Object.keys(query.OPTIONS).length === 2) {
+            let argSort: any = query.OPTIONS.ORDER;
+            if (typeof argSort === "string") {
+                resultObjects.sort((a, b) => a[argSort] - b[argSort]);
+            }
+            if (typeof argSort === "object") {
+                if (query.OPTIONS.ORDER.dir === "DOWN") {
+                    let sortKey: string = query.OPTIONS.ORDER.keys[0];
+                    resultObjects.sort((a, b) => b[sortKey] - a[sortKey]);
+                }
+                if (query.OPTIONS.ORDER.dir === "UP") {
+                    let sortKey: string = query.OPTIONS.ORDER.keys[0];
+                    resultObjects.sort((a, b) => a[sortKey] - b[sortKey]);
+                }
+                PerformQueryHelper.breakAnyTies(query, resultObjects);
+            }
         }
     }
 }

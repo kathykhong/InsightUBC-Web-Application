@@ -1,0 +1,23 @@
+{
+    "title": "Very invalid query",
+    "query": {
+        "WHERE": {
+            "OR": [
+                {
+                    "LT": {
+                        "courses_avg": 10
+                    }
+                }
+            ]
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "FLOWER",
+                "courses_avg"
+            ]
+
+        }
+    },
+    "isQueryValid": false,
+    "result": "InsightError"
+}

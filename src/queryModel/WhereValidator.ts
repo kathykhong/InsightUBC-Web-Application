@@ -30,7 +30,9 @@ export class WhereValidator {
             throw new InsightError("WHERE can only have maximum one filter");
         }
         // check that the one filter inside WHERE is actually a valid filter by calling validateFILTER
-        this.validateFilter(query.WHERE, queryValidator);
+        if (Object.keys(query.WHERE).length > 0) {
+            this.validateFilter(query.WHERE, queryValidator);
+        }
         // if it's an AND, an OR, or a NOT
     }
 

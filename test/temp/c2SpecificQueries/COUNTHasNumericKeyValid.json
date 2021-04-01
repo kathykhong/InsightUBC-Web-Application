@@ -1,0 +1,111 @@
+{
+    "title": " ",
+    "query": {
+        "WHERE": {
+            "IS": {
+                "courses_dept": "stat"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_title",
+                "passCount"
+            ]
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": [
+                "courses_title"
+            ],
+            "APPLY": [
+                {
+                    "passCount": {
+                        "COUNT": "courses_pass"
+                    }
+                }
+            ]
+        }
+    },
+    "isQueryValid": true,
+    "result": [
+        {
+            "courses_title": "elem stat applic",
+            "passCount": 46
+        },
+        {
+            "courses_title": "statistical mthd",
+            "passCount": 16
+        },
+        {
+            "courses_title": "intro prob&stats",
+            "passCount": 27
+        },
+        {
+            "courses_title": "elem statistics",
+            "passCount": 38
+        },
+        {
+            "courses_title": "int stats applic",
+            "passCount": 4
+        },
+        {
+            "courses_title": "intr probability",
+            "passCount": 24
+        },
+        {
+            "courses_title": "int stat infernc",
+            "passCount": 15
+        },
+        {
+            "courses_title": "rltnships data",
+            "passCount": 14
+        },
+        {
+            "courses_title": "sample surveys",
+            "passCount": 8
+        },
+        {
+            "courses_title": "stoch signal&sys",
+            "passCount": 2
+        },
+        {
+            "courses_title": "dsgn&anl expermt",
+            "passCount": 8
+        },
+        {
+            "courses_title": "meths stat learn",
+            "passCount": 1
+        },
+        {
+            "courses_title": "algo class pred",
+            "passCount": 2
+        },
+        {
+            "courses_title": "time srs forcast",
+            "passCount": 7
+        },
+        {
+            "courses_title": "case studies",
+            "passCount": 6
+        },
+        {
+            "courses_title": "stat infrnce i",
+            "passCount": 4
+        },
+        {
+            "courses_title": "stat infrnce ii",
+            "passCount": 4
+        },
+        {
+            "courses_title": "stat meth hd bio",
+            "passCount": 5
+        },
+        {
+            "courses_title": "tech stat conslt",
+            "passCount": 4
+        },
+        {
+            "courses_title": "",
+            "passCount": 13
+        }
+    ]
+}

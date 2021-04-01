@@ -1,0 +1,111 @@
+{
+    "title": " ",
+    "query": {
+        "WHERE": {
+            "IS": {
+                "courses_dept": "stat"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_title",
+                "deptCount"
+            ]
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": [
+                "courses_title"
+            ],
+            "APPLY": [
+                {
+                    "deptCount": {
+                        "COUNT": "courses_dept"
+                    }
+                }
+            ]
+        }
+    },
+    "isQueryValid": true,
+    "result": [
+        {
+            "courses_title": "elem stat applic",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "statistical mthd",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "intro prob&stats",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "elem statistics",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "int stats applic",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "intr probability",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "int stat infernc",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "rltnships data",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "sample surveys",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "stoch signal&sys",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "dsgn&anl expermt",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "meths stat learn",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "algo class pred",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "time srs forcast",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "case studies",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "stat infrnce i",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "stat infrnce ii",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "stat meth hd bio",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "tech stat conslt",
+            "deptCount": 1
+        },
+        {
+            "courses_title": "",
+            "deptCount": 1
+        }
+    ]
+}

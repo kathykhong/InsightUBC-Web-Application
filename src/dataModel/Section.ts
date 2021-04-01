@@ -13,6 +13,7 @@ export class Section {
     public instructor: string;
     public title: string;
     public uuid: string;
+    public applyKeyStorage: any = {} ; // {overallAvg: 55, maxFail: 6};
 
     public setAvg(value: number) {
         this.avg = value;
@@ -94,6 +95,7 @@ export class Section {
         return this.uuid;
     }
 
+    // todo: arg passed in could be overallAvg, call another method to extract this?
     public getArg(arg: string): any {
         switch (arg) {
             case "dept": {
@@ -126,7 +128,9 @@ export class Section {
             case "year": {
                 return this.getYear();
             }
+            // handle other anykeys
             default:
+                // retrieve the anykey defined value from? section?
                 throw new InsightError("Invalid arguments in columns");
         }
     }

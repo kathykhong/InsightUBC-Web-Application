@@ -1,0 +1,139 @@
+{
+    "title": " ",
+    "query": {
+        "WHERE": {
+            "IS": {
+                "courses_dept": "stat"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_title",
+                "overallAvg",
+                "overallPass"
+            ]
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": [
+                "courses_title",
+                "courses_dept"
+            ],
+            "APPLY": [
+                {
+                    "overallAvg": {
+                        "AVG": "courses_avg"
+                    }
+                },
+
+                {
+                    "overallPass": {
+                        "AVG": "courses_avg"
+                    }
+                }
+            ]
+        }
+    },
+    "isQueryValid": true,
+    "result": [
+        {
+            "courses_title": "elem stat applic",
+            "overallAvg": 73.11,
+            "overallPass": 73.11
+        },
+        {
+            "courses_title": "statistical mthd",
+            "overallAvg": 73.2,
+            "overallPass": 73.2
+        },
+        {
+            "courses_title": "intro prob&stats",
+            "overallAvg": 72.81,
+            "overallPass": 72.81
+        },
+        {
+            "courses_title": "elem statistics",
+            "overallAvg": 72.06,
+            "overallPass": 72.06
+        },
+        {
+            "courses_title": "int stats applic",
+            "overallAvg": 73.32,
+            "overallPass": 73.32
+        },
+        {
+            "courses_title": "intr probability",
+            "overallAvg": 71.12,
+            "overallPass": 71.12
+        },
+        {
+            "courses_title": "int stat infernc",
+            "overallAvg": 71.44,
+            "overallPass": 71.44
+        },
+        {
+            "courses_title": "rltnships data",
+            "overallAvg": 71.84,
+            "overallPass": 71.84
+        },
+        {
+            "courses_title": "sample surveys",
+            "overallAvg": 71.5,
+            "overallPass": 71.5
+        },
+        {
+            "courses_title": "stoch signal&sys",
+            "overallAvg": 64.42,
+            "overallPass": 64.42
+        },
+        {
+            "courses_title": "dsgn&anl expermt",
+            "overallAvg": 75.54,
+            "overallPass": 75.54
+        },
+        {
+            "courses_title": "meths stat learn",
+            "overallAvg": 79.67,
+            "overallPass": 79.67
+        },
+        {
+            "courses_title": "algo class pred",
+            "overallAvg": 80.06,
+            "overallPass": 80.06
+        },
+        {
+            "courses_title": "time srs forcast",
+            "overallAvg": 71.32,
+            "overallPass": 71.32
+        },
+        {
+            "courses_title": "case studies",
+            "overallAvg": 79.74,
+            "overallPass": 79.74
+        },
+        {
+            "courses_title": "stat infrnce i",
+            "overallAvg": 83.82,
+            "overallPass": 83.82
+        },
+        {
+            "courses_title": "stat infrnce ii",
+            "overallAvg": 81.34,
+            "overallPass": 81.34
+        },
+        {
+            "courses_title": "stat meth hd bio",
+            "overallAvg": 88.86,
+            "overallPass": 88.86
+        },
+        {
+            "courses_title": "tech stat conslt",
+            "overallAvg": 87.45,
+            "overallPass": 87.45
+        },
+        {
+            "courses_title": "",
+            "overallAvg": 86.71,
+            "overallPass": 86.71
+        }
+    ]
+}
