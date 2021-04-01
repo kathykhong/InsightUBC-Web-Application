@@ -243,7 +243,6 @@ export default class InsightFacade implements IInsightFacade {
                     this.prepareOutputJSON(query, resultSectionorRoomObjects, validator, resultObjects);
                 }
             }
-
             return Promise.resolve(resultObjects);
         } catch (err) {
             return Promise.reject(err);
