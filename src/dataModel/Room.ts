@@ -109,6 +109,12 @@ export class Room {
           case "fullname": {
               return this.getFullname();
           }
+          case "lat": {
+              return  this.getLat();
+          }
+          case "lon": {
+              return this.getLon();
+          }
           case "shortname": {
               return this.getShortname();
           }
