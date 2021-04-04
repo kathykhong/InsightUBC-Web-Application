@@ -5,6 +5,8 @@
 import fs = require("fs");
 import restify = require("restify");
 import Log from "../Util";
+import InsightFacade from "../controller/InsightFacade";
+import {InsightDatasetKind} from "../controller/IInsightFacade";
 
 /**
  * This configures the REST endpoints for the server.
@@ -13,6 +15,7 @@ export default class Server {
 
     private port: number;
     private rest: restify.Server;
+    private static insightFacade: InsightFacade = new InsightFacade();
 
     constructor(port: number) {
         Log.info("Server::<init>( " + port + " )");
@@ -64,6 +67,9 @@ export default class Server {
                 that.rest.get("/echo/:msg", Server.echo);
 
                 // NOTE: your endpoints should go here
+                that.rest.put("/dataset/:id/:kind", Server.putIDKind);
+
+                that.rest.del("/dataset/:id", Server.deleteID);
 
                 // This must be the last endpoint!
                 that.rest.get("/.*", Server.getStatic);
@@ -87,6 +93,23 @@ export default class Server {
         });
     }
 
+    private static deleteID(req: restify.Request, res: restify.Response, next: restify.Next) {
+        Log.trace("Server::deleteID(..) - params: " + JSON.stringify((req.params)));
+        try {
+            let response: Promise<string>;
+            Log.trace(req.params.id);
+            response = this.insightFacade.removeDataset(req.params.id);
+            Log.info("Server::deleteID(..) - responding " + 200);
+            res.json(200, {result: response});
+            // res body is list of datasetIDs added so far
+        } catch (err) {
+            Log.error("Server::deleteID(..) - responding 400");
+            res.json(400, {error: err});
+        }
+        return next();
+    }
+
+
     // The next two methods handle the echo service.
     // These are almost certainly not the best place to put these, but are here for your reference.
     // By updating the Server.echo function pointer above, these methods can be easily moved.
@@ -109,6 +132,29 @@ export default class Server {
         } else {
             return "Message not provided";
         }
+    }
+
+    private static putIDKind(req: restify.Request, res: restify.Response, next: restify.Next) {
+        Log.trace("Server::putIDKind(..) - params: " + JSON.stringify((req.params)));
+        try {
+            let response: Promise<string[]>;
+            // let data = req.params.dataset;
+            // let buff = Buffer.alloc(data);
+            // Log.trace(req.params.dataset);
+            Log.trace(req.params.dataset);
+            Log.trace("before base64");
+            let base64dataset = req.params.dataset.toString(`base64`);
+            Log.trace("after  base 64");
+            Log.trace(base64dataset);
+            response = this.insightFacade.addDataset(req.params.id, base64dataset, req.params.kind);
+            Log.info("Server::putIDKind(..) - responding " + 200);
+            res.json(200, {result: response});
+            // res body is list of datasetIDs added so far
+        } catch (err) {
+            Log.error("Server::putIDKind(..) - responding 400");
+            res.json(400, {error: err});
+        }
+        return next();
     }
 
     private static getStatic(req: restify.Request, res: restify.Response, next: restify.Next) {
