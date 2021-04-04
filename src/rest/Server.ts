@@ -15,11 +15,14 @@ export default class Server {
 
     private port: number;
     private rest: restify.Server;
-    private static insightFacade: InsightFacade = new InsightFacade();
+   // private static insightFacade: InsightFacade;
+   // private insightFacade: InsightFacade;
+    private static insightFacade: InsightFacade;
 
     constructor(port: number) {
         Log.info("Server::<init>( " + port + " )");
         this.port = port;
+        Server.insightFacade = new InsightFacade();
     }
 
     /**
@@ -98,6 +101,7 @@ export default class Server {
         try {
             let response: Promise<string>;
             Log.trace(req.params.id);
+            Log.trace(this);
             response = this.insightFacade.removeDataset(req.params.id);
             Log.info("Server::deleteID(..) - responding " + 200);
             res.json(200, {result: response});
@@ -135,22 +139,22 @@ export default class Server {
     }
 
     private static putIDKind(req: restify.Request, res: restify.Response, next: restify.Next) {
+        const that = this;
         Log.trace("Server::putIDKind(..) - params: " + JSON.stringify((req.params)));
         try {
             let response: Promise<string[]>;
-            // let data = req.params.dataset;
-            // let buff = Buffer.alloc(data);
-            // Log.trace(req.params.dataset);
-            Log.trace(req.params.dataset);
-            Log.trace("before base64");
-            let base64dataset = req.params.dataset.toString(`base64`);
+            Log.trace(req.body);
+            Log.trace("Buffer is" + req.body);
+
+            let base64dataset = req.body.toString("base64");
             Log.trace("after  base 64");
             Log.trace(base64dataset);
-            response = this.insightFacade.addDataset(req.params.id, base64dataset, req.params.kind);
+            response = Server.insightFacade.addDataset(req.params.id, base64dataset , req.params.kind);
             Log.info("Server::putIDKind(..) - responding " + 200);
             res.json(200, {result: response});
             // res body is list of datasetIDs added so far
         } catch (err) {
+            Log.trace(err);
             Log.error("Server::putIDKind(..) - responding 400");
             res.json(400, {error: err});
         }
