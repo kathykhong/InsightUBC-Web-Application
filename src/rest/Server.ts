@@ -5,6 +5,8 @@
 import fs = require("fs");
 import restify = require("restify");
 import Log from "../Util";
+import InsightFacade from "../controller/InsightFacade";
+import {InsightDataset, InsightDatasetKind, InsightError, NotFoundError} from "../controller/IInsightFacade";
 
 /**
  * This configures the REST endpoints for the server.
@@ -13,10 +15,14 @@ export default class Server {
 
     private port: number;
     private rest: restify.Server;
+   // private static insightFacade: InsightFacade;
+   // private insightFacade: InsightFacade;
+    private static insightFacade: InsightFacade;
 
     constructor(port: number) {
         Log.info("Server::<init>( " + port + " )");
         this.port = port;
+        Server.insightFacade = new InsightFacade();
     }
 
     /**
@@ -64,6 +70,11 @@ export default class Server {
                 that.rest.get("/echo/:msg", Server.echo);
 
                 // NOTE: your endpoints should go here
+                that.rest.put("/dataset/:id/:kind", Server.putIDKind);
+
+                that.rest.del("/dataset/:id", Server.deleteID);
+                that.rest.post("/query", Server.postQuery);
+                that.rest.get("/datasets", Server.getDataset);
 
                 // This must be the last endpoint!
                 that.rest.get("/.*", Server.getStatic);
@@ -87,6 +98,79 @@ export default class Server {
         });
     }
 
+    private static getDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
+        const that = this;
+        Log.trace("Server::putIDKind(..) - params: " + JSON.stringify((req.params)));
+        try {
+            Server.insightFacade.listDatasets()
+                .then((result: InsightDataset[]) => {
+                    Log.info("Server::putIDKind(..) - responding " + 200);
+                    res.json(200, {result: result});
+                })
+                .catch((err: any) => {
+                    Log.trace("inside catch");
+                    res.json(400, {error: err});
+                    Log.trace("end of inside catch");
+                });
+        } catch (err) {
+            Log.trace("outside catch");
+            Log.trace(err);
+            Log.error("Server::putIDKind(..) - responding 400");
+            res.json(400, {error: err});
+        }
+        return next();
+    }
+
+    private static postQuery(req: restify.Request, res: restify.Response, next: restify.Next) {
+        Log.trace("Server::deleteID(..) - params: " + JSON.stringify((req.params)));
+        try {
+            Server.insightFacade.performQuery(req.body)
+                .then((result: any[]) => {
+                    Log.info("Server::postQuery(..) - responding " + 200);
+                    res.json(200, {result: result});
+                })
+                .catch((err: any) => {
+                    {Log.error("Server::postQuery(..) - responding 400"); }
+                    res.json(400, {error: err});
+                });
+            // res body is list of datasetIDs added so far
+        } catch (err) {
+            Log.trace(err);
+            {Log.error("Server::postQuery(..) - responding 400"); }
+            res.json(400, {error: err});
+        }
+        return next();
+    }
+
+    private static deleteID(req: restify.Request, res: restify.Response, next: restify.Next) {
+        Log.trace("Server::deleteID(..) - params: " + JSON.stringify((req.params)));
+        try {
+            Log.trace("made it to delete");
+            Log.trace("delete id" + req.params.id);
+            Server.insightFacade.removeDataset(req.params.id)
+                .then((result: string) => {
+                    Log.info("Server::deleteID(..) - responding " + 200);
+                    res.json(200, {result: result});
+                })
+            .catch((error: any) => {
+                if (error instanceof InsightError) {
+                    {Log.error("Server::deleteID(..) - responding 400"); }
+                    res.json(400, {error: error});
+                }
+                if (error instanceof NotFoundError) {
+                    {Log.error("Server::deleteID(..) - responding 404"); }
+                    res.json(404, {error: error});
+                }
+            });
+            // res body is list of datasetIDs added so far
+        } catch (err) {
+            Log.trace(err);
+            res.json(400, {error: err});
+        }
+        return next();
+    }
+
+
     // The next two methods handle the echo service.
     // These are almost certainly not the best place to put these, but are here for your reference.
     // By updating the Server.echo function pointer above, these methods can be easily moved.
@@ -109,6 +193,36 @@ export default class Server {
         } else {
             return "Message not provided";
         }
+    }
+
+    private static putIDKind(req: restify.Request, res: restify.Response, next: restify.Next) {
+        const that = this;
+        Log.trace("Server::putIDKind(..) - params: " + JSON.stringify((req.params)));
+        try {
+           // Log.trace(req.body);
+           // Log.trace("Buffer is" + req.body);
+            let base64dataset = Buffer.from(req.body, "binary").toString("base64");
+           // let base64dataset = req.body.toString("base64");
+            Log.trace("after  base 64");
+           // Log.trace(base64dataset);
+            Server.insightFacade.addDataset(req.params.id, base64dataset, req.params.kind)
+                .then((result: string[]) => {
+                    Log.info("Server::putIDKind(..) - responding " + 200);
+                    res.json(200, {result: result});
+                })
+                .catch((err: any) => {
+                    Log.trace("inside catch");
+                    {Log.error("Server::putIDKind(..) - responding 400"); }
+                    res.json(400, {error: err});
+                    Log.trace("end of inside catch");
+                });
+        } catch (err) {
+            Log.trace("outside catch");
+            Log.trace(err);
+            Log.error("Server::putIDKind(..) - responding 400");
+            res.json(400, {error: err});
+        }
+        return next();
     }
 
     private static getStatic(req: restify.Request, res: restify.Response, next: restify.Next) {
