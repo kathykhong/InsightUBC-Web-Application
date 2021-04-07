@@ -1,11 +1,11 @@
-/**
+/*
+/!**
  * Builds a query object using the current document object model (DOM).
  * Must use the browser's global document object {@link https://developer.mozilla.org/en-US/docs/Web/API/Document}
  * to read DOM information.
  *
- * @returns query object adhering to the query EBNF
- */
-/*
+ * @returns querya object adhering to the query EBNF
+ *!/
 CampusExplorer.buildQuery = () => {
     let query = {};
     // TODO: implement!
@@ -25,11 +25,9 @@ CampusExplorer.buildQuery = () => {
     }
     let conditionsObjs = [];
     // class = "conditions-container" but I just want the class obj and not a list
-    // .conditions-conta
     let checkedCondValue;
     let queryWithWhereCond = query.WHERE;
-    let conditions = coursesForm.querySelector(".condition")
-    let conditionsContainer = conditions.querySelector(".conditions-container");
+    let conditionsContainer = coursesForm.querySelector(".conditions-container");
 
 
     // look for the checked option: all, any, nothing
@@ -139,9 +137,15 @@ CampusExplorer.buildQuery = () => {
     let columnsInputs = columns.getElementsByTagName("input");
 
     // add all the checked options to columns
+    let coursesColumnsKeys = ["audit", "avg", "dept", "uuid", "id", "instructor", "year", "fail", "pass", "title"];
     for (let input of columnsInputs) {
         if (input.checked) {
-            let columnKey = "courses_" + input.value;
+            let columnKey;
+            if (!coursesColumnsKeys.includes(input.value)) {
+                columnKey = input.value;
+            } else {
+                columnKey ="courses_" + input.value;
+            }
             queryWithColumns.push(columnKey);
         }
     }
@@ -189,27 +193,68 @@ CampusExplorer.buildQuery = () => {
     let groupArrKeys = [];
     for (let input of groupsInputs) {
         if (input.checked) {
-            let checkedGroupInput = "courses_" + input.value;
+            checkedGroupInput = "courses_" + input.value;
             groupArrKeys.push(checkedGroupInput);
         }
     }
 
+    console.log(groupArrKeys);
+
     let transformation = coursesForm.querySelector(".transformations");
     let transformationContainer = transformation.querySelector(".transformations-container");
-    if (transformationContainer.childElementCount === 0) {
-        if (groupArrKeys.length !== 0) {
-            transformationsObj["GROUP"] = groupArrKeys;
-            query.WHERE["TRANSFORMATIONS"] = transformationsObj;
+    transformationsObj["GROUP"] = groupArrKeys;
+    if (transformationContainer.childElementCount !== 0) {
+        let applyBlock = [];
+        for (let transformation of transformationContainer.childNodes) {
+            // operator ie SUM
+            let transformationOperators = transformation.querySelector(".operators");
+            let operatorOptions = transformationOperators.querySelectorAll("option");
+            let operatorOptionVal = "";
+            for (let option of operatorOptions) {
+                if (option.selected) {
+                    operatorOptionVal = option.value;
+                }
+            }
+            console.log(operatorOptionVal);
+            // field ie AVG
+            let transformationFields = transformation.querySelector(".fields");
+            let fieldOptions = transformationFields.querySelectorAll("option");
+            let fieldOptionVal = "";
+            for (let option of fieldOptions) {
+                if (option.selected) {
+                    fieldOptionVal = "courses_" + option.value;
+
+                }
+            }
+            console.log(fieldOptionVal);
+
+            // applyKey
+            let transformationTerm = transformation.querySelector(".term");
+            let termInput = transformationTerm.querySelector("input");
+            let userInput = "";
+            if (termInput.value) {
+                userInput = termInput.value;
+            }
+
+            console.log(userInput);
+            let innerApplyObj = {};
+            innerApplyObj[operatorOptionVal] = fieldOptionVal;
+            let applyRuleObj = {};
+            applyRuleObj[userInput] = innerApplyObj;
+            applyBlock.push(applyRuleObj);
+
         }
-    }
-    if (transformationC)
 
-    if (checkedGroupInput != "") {
+        console.log(applyBlock);
 
-
+        transformationsObj["APPLY"] = applyBlock;
     }
 
+    // handle columns here for the user val in trans
 
+    if (!(transformationContainer.childElementCount === 0 && groupArrKeys.length === 0)) {
+        query["TRANSFORMATIONS"] = transformationsObj
+    }
 
 
     return query;

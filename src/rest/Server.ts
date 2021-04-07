@@ -22,7 +22,6 @@ export default class Server {
     constructor(port: number) {
         Log.info("Server::<init>( " + port + " )");
         this.port = port;
-        Server.insightFacade = new InsightFacade();
     }
 
     /**
@@ -50,6 +49,7 @@ export default class Server {
      */
     public start(): Promise<boolean> {
         const that = this;
+        Server.insightFacade = new InsightFacade();
         return new Promise(function (fulfill, reject) {
             try {
                 Log.info("Server::start() - start");
