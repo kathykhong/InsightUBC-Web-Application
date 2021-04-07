@@ -5,6 +5,7 @@
  *
  * @returns query object adhering to the query EBNF
  */
+/*
 CampusExplorer.buildQuery = () => {
     let query = {};
     // TODO: implement!
@@ -213,3 +214,4 @@ CampusExplorer.buildQuery = () => {
 
     return query;
 };
+*/
