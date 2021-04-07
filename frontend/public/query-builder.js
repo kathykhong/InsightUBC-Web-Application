@@ -4,7 +4,7 @@
  * Must use the browser's global document object {@link https://developer.mozilla.org/en-US/docs/Web/API/Document}
  * to read DOM information.
  *
- * @returns query object adhering to the query EBNF
+ * @returns querya object adhering to the query EBNF
  *!/
 CampusExplorer.buildQuery = () => {
     let query = {};
