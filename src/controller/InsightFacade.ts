@@ -211,6 +211,7 @@ export default class InsightFacade implements IInsightFacade {
             let datasetKindToQuery: InsightDatasetKind = dataset.getKind();
             let resultObjects: any[] = [];
             let groupApplies: Map<string, Section[]>;
+            let output: any[];
 
             if (datasetKindToQuery === InsightDatasetKind.Courses) {
                 let qp: QueryProcessor = new QueryProcessor();
@@ -223,9 +224,9 @@ export default class InsightFacade implements IInsightFacade {
                     for (let key of groupApplies.keys()) {
                         groupingsArrs.push(groupApplies.get(key)[0]);
                     }
-                    this.prepareOutputJSON(query, groupingsArrs, validator, resultObjects);
+                    output = this.prepareOutputJSON(query, groupingsArrs, validator, resultObjects);
                 } else {
-                    this.prepareOutputJSON(query, resultSectionorRoomObjects, validator, resultObjects);
+                    output = this.prepareOutputJSON(query, resultSectionorRoomObjects, validator, resultObjects);
                 }
             } else if (datasetKindToQuery === InsightDatasetKind.Rooms) {
                 let rqp: RoomsQueryProcessor = new RoomsQueryProcessor();
@@ -238,12 +239,12 @@ export default class InsightFacade implements IInsightFacade {
                     for (let key of groupApplies.keys()) {
                         groupingsArrs.push(groupApplies.get(key)[0]);
                     }
-                    this.prepareOutputJSON(query, groupingsArrs, validator, resultObjects);
+                    output = this.prepareOutputJSON(query, groupingsArrs, validator, resultObjects);
                 } else {
-                    this.prepareOutputJSON(query, resultSectionorRoomObjects, validator, resultObjects);
+                    output = this.prepareOutputJSON(query, resultSectionorRoomObjects, validator, resultObjects);
                 }
             }
-            return Promise.resolve(resultObjects);
+            return Promise.resolve(output);
         } catch (err) {
             return Promise.reject(err);
         }
@@ -265,32 +266,12 @@ export default class InsightFacade implements IInsightFacade {
             }
             resultObjects.push(jsonResultElt);
         }
-
         if (Object.keys(resultObjects).length > 5000) {
             throw new ResultTooLargeError(
                 "there cannot be more than 5000 results",
             );
         }
-        this.sortResults(query, resultObjects);
-    }
-
-    private sortResults(query: any, resultObjects: any[]) {
-        if (Object.keys(query.OPTIONS).length === 2) {
-            let argSort: any = query.OPTIONS.ORDER;
-            if (typeof argSort === "string") {
-                resultObjects.sort((a, b) => a[argSort] - b[argSort]);
-            }
-            if (typeof argSort === "object") {
-                if (query.OPTIONS.ORDER.dir === "DOWN") {
-                    let sortKey: string = query.OPTIONS.ORDER.keys[0];
-                    resultObjects.sort((a, b) => b[sortKey] - a[sortKey]);
-                }
-                if (query.OPTIONS.ORDER.dir === "UP") {
-                    let sortKey: string = query.OPTIONS.ORDER.keys[0];
-                    resultObjects.sort((a, b) => a[sortKey] - b[sortKey]);
-                }
-                PerformQueryHelper.breakAnyTies(query, resultObjects);
-            }
-        }
+        let sortResult: any[]  = PerformQueryHelper.sortResults(query, resultObjects);
+        return sortResult;
     }
 }

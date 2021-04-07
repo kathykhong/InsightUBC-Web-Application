@@ -21,6 +21,7 @@ export class QueryProcessor {
                 for (const arg of subquery.AND) {
                     if (!this.checkFilterCondMet(section, arg)) {
                         andResultBoolean = false;
+
                     }
                 }
                 return andResultBoolean;
