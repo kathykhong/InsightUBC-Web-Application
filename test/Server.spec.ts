@@ -98,7 +98,7 @@ describe("Facade D3", function () {
         try {
             return chai.request(SERVER_URL)
                 .put(ENDPOINT_URL)
-                .send(ZIP_FILE_DATA)
+                .send(null)
                 .set("Content-Type", "application/x-zip-compressed")
                 .then(function (res: Response) {
                     // some logging here please!
@@ -190,12 +190,13 @@ describe("Facade D3", function () {
         let ENDPOINT_URL = "/query";
         let query = {WHERE: {GT: {courses_avg: 97}},
             OPTIONS: {COLUMNS: ["courses_dept", "courses_avg"], ORDER: "courses_avg"}};
+        let queryObj = JSON.stringify(query);
         try {
             return chai.request(SERVER_URL)
                 .post(ENDPOINT_URL)
-                .send(query)
+                .send(queryObj)
                 .then(function (res: Response) {
-                    expect(res.status).to.be.equal(400);
+                    expect(res.status).to.be.equal(200);
                     // can we do this?
                 })
                 .catch(function (err) {
@@ -212,10 +213,11 @@ describe("Facade D3", function () {
         let SERVER_URL = "http://localhost:4321";
         let ENDPOINT_URL = "/query";
         let query = {WHERE: {GT: {courses_avg: 97}}};
+        let queryObj = JSON.stringify(query);
         try {
             return chai.request(SERVER_URL)
                 .post(ENDPOINT_URL)
-                .send(query)
+                .send(queryObj)
                 .then(function (res: Response) {
                     expect.fail();
                     // can we do this?

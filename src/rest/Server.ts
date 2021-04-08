@@ -99,7 +99,6 @@ export default class Server {
     }
 
     private static getDataset(req: restify.Request, res: restify.Response, next: restify.Next) {
-        const that = this;
         Log.trace("Server::putIDKind(..) - params: " + JSON.stringify((req.params)));
         try {
             Server.insightFacade.listDatasets()
