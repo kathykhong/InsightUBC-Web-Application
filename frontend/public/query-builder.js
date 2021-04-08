@@ -1,21 +1,41 @@
-/*
-/!**
+/**
  * Builds a query object using the current document object model (DOM).
  * Must use the browser's global document object {@link https://developer.mozilla.org/en-US/docs/Web/API/Document}
  * to read DOM information.
  *
  * @returns querya object adhering to the query EBNF
- *!/
-CampusExplorer.buildQuery = () => {
-    let query = {};
-    // TODO: implement!
-    query["WHERE"] = {};
+ */
 
+CampusExplorer.buildQuery = () => {
+    let nav = document.querySelector("nav");
+    let active = nav.querySelector(".active");
+    let data = active.dataset
+    let form;
+    let query = {}
+    let coursesColumnsKeys = ["audit", "avg", "dept", "uuid",
+        "id", "instructor", "year", "fail", "pass", "title"];
+    let roomsColumnsKeys = ["address", "lat", "seats", "fullname",
+        "shortname", "lon", "furniture", "name", "type", "href", "number"];
+    if (data.type === "courses") {
+        form = document.querySelector('form[data-type = "courses"]');
+        query = buildQueryHelper(form, "courses_", coursesColumnsKeys);
+
+    }
+    if (data.type === "rooms") {
+        form = document.querySelector('form[data-type = "rooms"]');
+        query = buildQueryHelper(form, "rooms_", roomsColumnsKeys);
+    }
+
+    return query;
+};
+
+function buildQueryHelper(form, prefix, columnsKeys) {
+    let query = {};
+    query["WHERE"] = {};
     // find data-type courses
-    let coursesForm = document.querySelector('form[data-type = "courses"]');
-    // coursesForm.getElementsByClassName("condition-type")[0]; - indexing attempt
+    // form.getElementsByClassName("condition-type")[0]; - indexing attempt
     // there is a better way
-    let conditionType = coursesForm.querySelector(".condition-type");
+    let conditionType = form.querySelector(".condition-type");
 
     let conditionOptions = conditionType.getElementsByTagName("input");
     for (let option of conditionOptions) {
@@ -27,7 +47,7 @@ CampusExplorer.buildQuery = () => {
     // class = "conditions-container" but I just want the class obj and not a list
     let checkedCondValue;
     let queryWithWhereCond = query.WHERE;
-    let conditionsContainer = coursesForm.querySelector(".conditions-container");
+    let conditionsContainer = form.querySelector(".conditions-container");
 
 
     // look for the checked option: all, any, nothing
@@ -74,7 +94,7 @@ CampusExplorer.buildQuery = () => {
             if (field.selected) {
                 console.log(field.value);
                 // e.g. courses_audit
-                fieldObjKey = "courses_" + field.value;
+                fieldObjKey = prefix + field.value;
 
             }
         }
@@ -133,18 +153,17 @@ CampusExplorer.buildQuery = () => {
     query.OPTIONS["COLUMNS"] = [];
     let queryWithColumns = query.OPTIONS.COLUMNS;
 
-    let columns = coursesForm.querySelector(".columns");
+    let columns = form.querySelector(".columns");
     let columnsInputs = columns.getElementsByTagName("input");
 
     // add all the checked options to columns
-    let coursesColumnsKeys = ["audit", "avg", "dept", "uuid", "id", "instructor", "year", "fail", "pass", "title"];
     for (let input of columnsInputs) {
         if (input.checked) {
             let columnKey;
-            if (!coursesColumnsKeys.includes(input.value)) {
+            if (!columnsKeys.includes(input.value)) {
                 columnKey = input.value;
             } else {
-                columnKey ="courses_" + input.value;
+                columnKey = prefix + input.value;
             }
             queryWithColumns.push(columnKey);
         }
@@ -152,7 +171,7 @@ CampusExplorer.buildQuery = () => {
     console.log(queryWithColumns);
     console.log("CampusExplorer.buildQuery not implemented yet.");
 
-    let order = coursesForm.querySelector(".order");
+    let order = form.querySelector(".order");
     let options = order.querySelectorAll("option");
     let descending = order.querySelector(".descending");
     let descendingInput = descending.querySelector("input");
@@ -161,7 +180,7 @@ CampusExplorer.buildQuery = () => {
     let dir = "";
     for (let option of options) {
         if (option.selected) {
-            highlightedOpt = "courses_" + option.value.toLowerCase();
+            highlightedOpt = prefix + option.value.toLowerCase();
         }
     }
     if (descendingInput.checked) {
@@ -186,21 +205,21 @@ CampusExplorer.buildQuery = () => {
         }
     }
 
-    let groups = coursesForm.querySelector(".groups");
+    let groups = form.querySelector(".groups");
     let groupsInputs = groups.querySelectorAll("input")
     let checkedGroupInput = "";
     let transformationsObj ={};
     let groupArrKeys = [];
     for (let input of groupsInputs) {
         if (input.checked) {
-            checkedGroupInput = "courses_" + input.value;
+            checkedGroupInput = prefix + input.value;
             groupArrKeys.push(checkedGroupInput);
         }
     }
 
     console.log(groupArrKeys);
 
-    let transformation = coursesForm.querySelector(".transformations");
+    let transformation = form.querySelector(".transformations");
     let transformationContainer = transformation.querySelector(".transformations-container");
     transformationsObj["GROUP"] = groupArrKeys;
     if (transformationContainer.childElementCount !== 0) {
@@ -222,7 +241,7 @@ CampusExplorer.buildQuery = () => {
             let fieldOptionVal = "";
             for (let option of fieldOptions) {
                 if (option.selected) {
-                    fieldOptionVal = "courses_" + option.value;
+                    fieldOptionVal = prefix + option.value;
 
                 }
             }
@@ -256,7 +275,5 @@ CampusExplorer.buildQuery = () => {
         query["TRANSFORMATIONS"] = transformationsObj
     }
 
-
-    return query;
-};
-*/
+    return query ;
+}
