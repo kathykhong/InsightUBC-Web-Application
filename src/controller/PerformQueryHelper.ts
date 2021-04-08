@@ -50,8 +50,11 @@ export class PerformQueryHelper {
                 prevSortedArr = currSorted;
             }
             return prevSortedArr;
+        } else {
+            return resultObjects;
         }
     }
+
 
     public static partialSort(arr: any[], start: number, end: number, sortKey: string, dir: string ) {
         let preSorted: any[] = [];

@@ -34,6 +34,17 @@ export default class InsightFacade implements IInsightFacade {
     constructor() {
         Log.trace("InsightFacadeImpl::init()");
         this.datasetsMap = new Map();
+        fs.readdir("../../data", (err, files) => {
+            if (err) {
+                this.datasetsMap = new Map();
+            } else {
+                Log.trace("\nCurrent directory filenames:");
+                files.forEach((file) => {
+                    Log.trace(file);
+                });
+            }
+        });
+
     }
 
     public addDataset(
