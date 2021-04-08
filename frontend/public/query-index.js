@@ -11,3 +11,25 @@
 // TODO: implement!
 //ADD EVENT LIST - EVENTTYPE PARAM
 // TAKES CALL BACK FN -> BUILD QUERY METHOD , SEND
+
+// how to structure this file??? seems like no class encapsulation, return type ANYTHING
+// don't need to. this file goes along with HTML
+// do we need to promise chain here
+// cmd b into methods
+// ask about Server implementation
+// need to parse result into json
+
+queryObject = document.getElementById("submit-button")
+    .addEventListener("click", handleClick);
+
+function handleClick() {
+    let queryObj = CampusExplorer.buildQuery();
+    CampusExplorer.sendQuery(queryObj)
+        .then(r => {
+            CampusExplorer.renderResult(JSON.parse(r));
+        })
+        .catch((err) => {
+            CampusExplorer.renderResult(err);
+        });
+}
+
