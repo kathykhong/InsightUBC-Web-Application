@@ -3,7 +3,7 @@
  * Must use the browser's global document object {@link https://developer.mozilla.org/en-US/docs/Web/API/Document}
  * to read DOM information.
  *
- * @returns querya object adhering to the query EBNF
+ * @returns query object adhering to the query EBNF
  */
 
 CampusExplorer.buildQuery = () => {
@@ -43,7 +43,7 @@ function buildQueryHelper(form, prefix, columnsKeys) {
             console.log(option.value);
         }
     }
-    let conditionsObjs = [];
+
     // class = "conditions-container" but I just want the class obj and not a list
     let checkedCondValue;
     let queryWithWhereCond = query.WHERE;
@@ -175,14 +175,21 @@ function buildQueryHelper(form, prefix, columnsKeys) {
     let options = order.querySelectorAll("option");
     let descending = order.querySelector(".descending");
     let descendingInput = descending.querySelector("input");
-    let highlightedOpt = "";
+    let highlightedOpts = [];
     let orderObj={};
-    let dir = "";
+    let dir;
     for (let option of options) {
         if (option.selected) {
-            highlightedOpt = prefix + option.value.toLowerCase();
+            let highlightedOpt;
+            if (columnsKeys.includes(option.value)) {
+                highlightedOpt = prefix + option.value.toLowerCase();
+            } else {
+                highlightedOpt = option.value;
+            }
+            highlightedOpts.push(highlightedOpt);
         }
     }
+
     if (descendingInput.checked) {
         dir = "DOWN";
     } else {
@@ -192,15 +199,15 @@ function buildQueryHelper(form, prefix, columnsKeys) {
     orderObj["dir"] = dir;
     orderObj["keys"] = [];
     if (dir === "DOWN") {
-        if (highlightedOpt !== "") {
-            orderObj.keys.push(highlightedOpt);
+        if (highlightedOpts.length !== 0) {
+            orderObj.keys = highlightedOpts;
         }
         query.OPTIONS["ORDER"] = orderObj;
     }
     if (dir === "UP") {
         // up and highlighted -> ORDER ; up and no highlight -> NO ORDER
-        if (highlightedOpt !== "") {
-            orderObj.keys.push(highlightedOpt);
+        if (highlightedOpts.length !== 0) {
+            orderObj.keys = highlightedOpts;
             query.OPTIONS["ORDER"] = orderObj;
         }
     }

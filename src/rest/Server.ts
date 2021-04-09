@@ -150,6 +150,7 @@ export default class Server {
                 .then((result: string) => {
                     Log.info("Server::deleteID(..) - responding " + 200);
                     res.json(200, {result: result});
+                    Log.trace(result);
                 })
             .catch((error: any) => {
                 if (error instanceof InsightError) {

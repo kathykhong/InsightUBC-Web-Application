@@ -41,7 +41,6 @@ describe("Facade D3", function () {
         Log.trace("afterEach has been called");
     });
 
-    // Sample on how to format PUT requests
     it("DEL test for courses dataset with 404", function () {
         let SERVER_URL = "http://localhost:4321";
         let ENDPOINT_URL = "/dataset/courses";
@@ -59,6 +58,8 @@ describe("Facade D3", function () {
             Log.error("DEL test error" + err);
         }
     });
+
+    // Sample on how to format PUT requests
 
     it("PUT test for courses dataset", function () {
         let SERVER_URL = "http://localhost:4321";
@@ -173,14 +174,30 @@ describe("Facade D3", function () {
                     expect(res.status).to.be.equal(200);
                 })
                 .catch(function (err) {
-                    Log.trace("line 97 OF DELETE TEST");
                     // some logging here please!
                     Log.trace("PUT + DEL test caught" + err);
                     expect.fail();
                 });
         } catch (err) {
             // and some more logging here!
-            Log.trace("line 104");
+            Log.error("DEL test error" + err);
+        }
+    });
+
+    it("DEL test for courses dataset with 404", function () {
+        let SERVER_URL = "http://localhost:4321";
+        let ENDPOINT_URL = "/dataset/courses";
+        try {
+            return chai.request(SERVER_URL).del(ENDPOINT_URL)
+                .then(function (res: Response) {
+                    expect.fail();
+                })
+                .catch(function (err) {
+                    Log.trace(err);
+                    expect(err.status).to.be.equal(404);
+                });
+        } catch (err) {
+            // and some more logging here!
             Log.error("DEL test error" + err);
         }
     });
