@@ -108,14 +108,14 @@ export default class Server {
                 })
                 .catch((err: any) => {
                     Log.trace("inside catch");
-                    res.json(400, {error: err});
+                    res.json(400, {error: err.message});
                     Log.trace("end of inside catch");
                 });
         } catch (err) {
             Log.trace("outside catch");
             Log.trace(err);
             Log.error("Server::putIDKind(..) - responding 400");
-            res.json(400, {error: err});
+            res.json(400, {error: err.message});
         }
         return next();
     }
@@ -130,13 +130,13 @@ export default class Server {
                 })
                 .catch((err: any) => {
                     {Log.error("Server::postQuery(..) - responding 400"); }
-                    res.json(400, {error: err});
+                    res.json(400, {error: err.message});
                 });
             // res body is list of datasetIDs added so far
         } catch (err) {
             Log.trace(err);
             {Log.error("Server::postQuery(..) - responding 400"); }
-            res.json(400, {error: err});
+            res.json(400, {error: err.message});
         }
         return next();
     }
@@ -154,17 +154,17 @@ export default class Server {
             .catch((error: any) => {
                 if (error instanceof InsightError) {
                     {Log.error("Server::deleteID(..) - responding 400"); }
-                    res.json(400, {error: error});
+                    res.json(400, {error: error.message});
                 }
                 if (error instanceof NotFoundError) {
                     {Log.error("Server::deleteID(..) - responding 404"); }
-                    res.json(404, {error: error});
+                    res.json(404, {error: error.message});
                 }
             });
             // res body is list of datasetIDs added so far
         } catch (err) {
             Log.trace(err);
-            res.json(400, {error: err});
+            res.json(400, {error: err.message});
         }
         return next();
     }
@@ -181,7 +181,7 @@ export default class Server {
             res.json(200, {result: response});
         } catch (err) {
             Log.error("Server::echo(..) - responding 400");
-            res.json(400, {error: err});
+            res.json(400, {error: err.message});
         }
         return next();
     }
@@ -212,14 +212,14 @@ export default class Server {
                 .catch((err: any) => {
                     Log.trace("inside catch");
                     {Log.error("Server::putIDKind(..) - responding 400"); }
-                    res.json(400, {error: err});
+                    res.json(400, {error: err.message});
                     Log.trace("end of inside catch");
                 });
         } catch (err) {
             Log.trace("outside catch");
             Log.trace(err);
             Log.error("Server::putIDKind(..) - responding 400");
-            res.json(400, {error: err});
+            res.json(400, {error: err.message});
         }
         return next();
     }
